@@ -1,0 +1,79 @@
+import { Images } from '@/assets/Images';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { BottomTabHeaderProps } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
+import React, { useContext } from 'react';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { User } from '../context/UserContext';
+import { Colors } from '../utils/Colors';
+import { getGreeting } from './GetDaysTime';
+const CustomHeader: React.FC<BottomTabHeaderProps> = () => {
+    const {navigate} = useNavigation<any>();
+      const { user, setUser } = useContext<any>(User);
+  let local: string = "http://192.168.1.9:5000"
+
+    
+    return (
+    
+            <View  style={styles.container}>
+                <View style={styles.Flex}>
+                    <Image
+                        source={user?.user?.profileImage ? {uri:local+user?.user?.profileImage} : Images.Profile}
+                        style={styles.Images}
+                    />
+                    <View>
+                        <Text style={styles.Label}>{getGreeting()}</Text>
+                        <Text style={styles.Name}>{user?.user?.name}</Text>
+                    </View>
+                </View>
+                <View style={styles.Flex}>
+                    <TouchableOpacity style={styles.BTN} onPress={()=>navigate('Notifications')}>
+                        <Ionicons name="notifications-outline" size={18} color={Colors.dark} />
+                    </TouchableOpacity>
+            
+                </View>
+            </View>
+    )
+}
+
+export default CustomHeader;
+
+const styles = StyleSheet.create({
+    container: {
+        width: '100%',
+        backgroundColor: Colors.white,
+        paddingHorizontal: 15,
+        paddingVertical:10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+    },
+    Images: {
+        width: 35,
+        height: 35,
+        borderRadius: 120,
+        resizeMode: 'cover'
+    },
+    Label: {
+        fontFamily: 'SemiBold',
+        color: Colors.black,
+        fontSize: 16
+    },
+    Name: {
+        // flex: 1,
+        fontFamily: 'regular',
+        fontSize: 14,
+        color: Colors.black
+    },
+    Flex: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10
+    },
+    BTN: {
+        backgroundColor: Colors.lightGray,
+        paddingHorizontal: 5,
+        paddingVertical: 10,
+        borderRadius: 20
+    }
+});
