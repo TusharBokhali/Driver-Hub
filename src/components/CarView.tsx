@@ -138,14 +138,14 @@ const filterData = () => {
                     scrollEnabled={false}
                     ListEmptyComponent={() => (
                       !IsLoading &&
-                        <View style={[styles.Flex, { height: height * 0.6, width: width }]}>
-                            <Text style={[styles.Title, { textAlign: 'center', width: '100%' }]}>No Data</Text>
+                        <View style={[styles.Flex, { height: height * 0.2, width: width }]}>
+                            <Text style={[styles.Title, { textAlign: 'center', width: '100%',alignSelf:'center' }]}>No Data</Text>
                         </View>
                     )}
                     ListFooterComponent={()=>(
                      IsLoading &&
-                      <View  style={[styles.Flex, { height: height * 0.6, width: width, }]}>
-                        <ActivityIndicator size={'large'} color={Colors.primary} style={{alignSelf:'center'}}/>
+                      <View  style={[styles.Flex, { height: height * 0.2, width: width, }]}>
+                        <ActivityIndicator size={'large'} color={Colors.primary} style={{alignSelf:'center',width:'100%'}}/>
                       </View>
                     )}
                     contentContainerStyle={{ paddingBottom: 100, gap: 25 }}
