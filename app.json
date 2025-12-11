@@ -8,8 +8,11 @@
     "scheme": "driverhub",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+      "developmentClient": {
+      "enabled": false
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false
     },
     "android": {
       "adaptiveIcon": {

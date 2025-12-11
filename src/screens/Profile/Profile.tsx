@@ -13,10 +13,10 @@ import axios from 'axios';
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Alert, Image, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ActionSheet from "react-native-actionsheet";
 export default function Profile({ navigation }: any) {
-  let local: string = "http://192.168.1.9:5000"
+  let local: string = "http://192.168.1.4:5000"
   const { navigate, replace } = useNavigation<any>();
   const actionSheetRef = useRef<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -177,17 +177,10 @@ export default function Profile({ navigation }: any) {
 
         <View style={styles.ImageContainer}>
           <Image
-            source={{
-              uri: ProfilePicture
-                ? ProfilePicture.uri.startsWith('file://')
-                  ? ProfilePicture.uri
-                  : 'file://' + ProfilePicture.uri
-                : user?.user?.profileImage
-                  ? `${local}${user.user.profileImage}` 
-                  : Images.Profile, 
-            }}
+            source={user?.user?.profileImage ? { uri: local + user?.user?.profileImage } : Images.Driver}
             style={styles.ProfileImage}
           />
+
 
           <TouchableOpacity style={styles.CameraImage} onPress={() => openOptions()}>
             <Image
@@ -370,6 +363,7 @@ export default function Profile({ navigation }: any) {
         onClose={() => setShowModal(false)}
         onConfirm={() => {
           AsyncStorage.clear();
+          setUser(null)
           replace("Login")
         }}
       />

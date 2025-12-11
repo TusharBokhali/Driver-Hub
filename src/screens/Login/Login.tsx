@@ -8,20 +8,52 @@ import { Colors } from '@/src/utils/Colors'
 import { AsyncStorageService } from '@/src/utils/store'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import React, { useState } from 'react'
-import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, Vibration, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { SafeAreaView } from 'react-native-safe-area-context'
-
+import GestureRecognizer from 'react-native-swipe-gestures'
 export default function Login({ navigation }: any) {
   const [Email, setEmail] = useState<string>('');
   const [Password, setPassword] = useState<string>('');
   const [EyeShow, setEyeShow] = useState<boolean>(false);
   const [IsLoading, setIsLoading] = useState<boolean>(false);
+  const [swipeSequence, setSwipeSequence] = useState<string[]>([]);
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({
     visible: false,
     message: '',
     type: 'info'
   })
+
+  const REQUIRED_PATTERN = ['up', 'right', 'down', 'left'];
+  const isExactMatch = (arr1: string[], arr2: string[]) => {
+    if (arr1.length !== arr2.length) return false;
+
+    return arr1.every((item, index) => item === arr2[index]);
+  };
+  const handleSwipe = (direction: string) => {
+    let copy = [...swipeSequence];
+    // Alert.alert(`${direction}`)
+    if (copy.includes(direction)) {
+      setSwipeSequence([]);
+    } else {
+      copy.push(direction)
+      setSwipeSequence(copy)
+    }
+    Vibration.vibrate(400)
+    const isMatch = isExactMatch(copy, REQUIRED_PATTERN);
+    if (isMatch) {
+      setTimeout(() => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'LoginAdmin' }],
+        });
+        setSwipeSequence([]);
+        copy = [];
+      }, 50);
+    }
+
+  };
+
   const onLogin = async () => {
     if (!Email || !Email.trim()) {
       setToast({ visible: true, type: 'error', message: "Please enter your email!" })
@@ -55,7 +87,7 @@ export default function Login({ navigation }: any) {
         email: Email.trim(),
         password: Password.trim(),
       });
-      
+
       if (res?.success) {
         let user = res?.data?.data;
         console.log(user);
@@ -75,115 +107,128 @@ export default function Login({ navigation }: any) {
     }
   };
 
+  const config = {
+    velocityThreshold: 0.3,
+    directionalOffsetThreshold: 80,
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAwareScrollView
-        contentContainerStyle={{ flexGrow: 1, padding: 15 }}
-        enableOnAndroid={true}
-        extraScrollHeight={20}
-        keyboardShouldPersistTaps="handled"
-      >
+    <GestureRecognizer
+      onSwipeUp={() => handleSwipe('up')}
+      onSwipeDown={() => handleSwipe('down')}
+      onSwipeLeft={() => handleSwipe('left')}
+      onSwipeRight={() => handleSwipe('right')}
+      config={config}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.container}>
+        <KeyboardAwareScrollView
+          contentContainerStyle={{ flexGrow: 1, padding: 15 }}
+          enableOnAndroid={true}
+          extraScrollHeight={20}
+          keyboardShouldPersistTaps="handled"
+        >
 
-        <View style={styles.TopContent}>
-          <Image
-            source={Images.RadientLogo}
-            style={styles.LOGO}
-            resizeMode='contain'
-          />
-          <Text style={styles.Title}>Welcome Back</Text>
-          <Text style={styles.Description}>Sign in to your Vehicle Hub </Text>
-          <Text style={styles.Description}>account</Text>
-        </View>
-
-        <View style={styles.LoginBox}>
-          <View style={styles.InputBox}>
-            <Text style={styles.Label}>Email Address</Text>
-            <View style={styles.Input}>
-              <Image
-                source={Images.Email}
-                style={styles.MiniImage}
-              />
-              <TextInput
-                style={styles.TextInput}
-                placeholder='Enter your email'
-                placeholderTextColor={Colors.dark}
-                value={Email}
-                onChangeText={setEmail}
-                keyboardType='email-address'
-                autoCapitalize='none'
-                autoCorrect={false}
-                autoComplete='email'
-                textContentType='emailAddress'
-              />
-            </View>
+          <View style={styles.TopContent}>
+            <Image
+              source={Images.RadientLogo}
+              style={styles.LOGO}
+              resizeMode='contain'
+            />
+            <Text style={styles.Title}>Welcome Back</Text>
+            <Text style={styles.Description}>Sign in to your Vehicle Hub </Text>
+            <Text style={styles.Description}>account</Text>
           </View>
 
-          <View style={styles.InputBox}>
-            <Text style={styles.Label}>Password</Text>
-            <View style={styles.Input}>
+          <View style={styles.LoginBox}>
+            <View style={styles.InputBox}>
+              <Text style={styles.Label}>Email Address</Text>
+              <View style={styles.Input}>
+                <Image
+                  source={Images.Email}
+                  style={styles.MiniImage}
+                />
+                <TextInput
+                  style={styles.TextInput}
+                  placeholder='Enter your email'
+                  placeholderTextColor={Colors.dark}
+                  value={Email}
+                  onChangeText={setEmail}
+                  keyboardType='email-address'
+                  autoCapitalize='none'
+                  autoCorrect={false}
+                  autoComplete='email'
+                  textContentType='emailAddress'
+                />
+              </View>
+            </View>
+
+            <View style={styles.InputBox}>
+              <Text style={styles.Label}>Password</Text>
+              <View style={styles.Input}>
+                <Image
+                  source={Images.Lock}
+                  style={[styles.MiniImage, { width: 15, height: 20 }]}
+                />
+                <TextInput
+                  style={[styles.TextInput, { width: '80%' }]}
+                  placeholderTextColor={Colors.dark}
+                  placeholder='Enter your password'
+                  value={Password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!EyeShow}
+                  autoCorrect={false}
+                  autoComplete='password'
+                  textContentType='password'
+                />
+                <TouchableOpacity onPress={() => setEyeShow(!EyeShow)}>
+                  <Ionicons name={EyeShow ? "eye" : "eye-off"} size={24} color={Colors.dark} />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <TouchableOpacity>
+              <Text style={[styles.Label, { color: Colors.primary, textAlign: 'right', marginTop: 10 }]}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.Button} onPress={() => onLogin()}>
+              <Text style={[styles.Label, { color: Colors.white, }]}>
+                {
+                  IsLoading ?
+                    <ActivityIndicator size="small" color={Colors.white} />
+                    : "Log In"
+                }
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.Line}>
+              <Text style={styles.ORText}>OR</Text>
+            </View>
+
+            <TouchableOpacity style={[styles.Button, styles.Flex]}>
               <Image
-                source={Images.Lock}
-                style={[styles.MiniImage, { width: 15, height: 20 }]}
+                source={Images.Google}
+                style={styles.Google}
               />
-              <TextInput
-                style={[styles.TextInput, { width: '80%' }]}
-                placeholderTextColor={Colors.dark}
-                placeholder='Enter your password'
-                value={Password}
-                onChangeText={setPassword}
-                secureTextEntry={!EyeShow}
-                autoCorrect={false}
-                autoComplete='password'
-                textContentType='password'
-              />
-              <TouchableOpacity onPress={() => setEyeShow(!EyeShow)}>
-                <Ionicons name={EyeShow ? "eye" : "eye-off"} size={24} color={Colors.dark} />
+              <Text style={[styles.Label]}>Continue with Google</Text>
+            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+              <Text style={[styles.Label, { textAlign: 'center', }]}>{"Don't have an account? "}</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <Text style={[styles.Label, { color: Colors.primary, fontFamily: "Bold" }]}>Sign Up</Text>
               </TouchableOpacity>
             </View>
           </View>
-          <TouchableOpacity>
-            <Text style={[styles.Label, { color: Colors.primary, textAlign: 'right', marginTop: 10 }]}>Forgot Password?</Text>
-          </TouchableOpacity>
 
-          <TouchableOpacity style={styles.Button} onPress={() => onLogin()}>
-            <Text style={[styles.Label, { color: Colors.white, }]}>
-              {
-                IsLoading ?
-                  <ActivityIndicator size="small" color={Colors.white} />
-                  : "Log In"
-              }
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.Line}>
-            <Text style={styles.ORText}>OR</Text>
-          </View>
-
-          <TouchableOpacity style={[styles.Button, styles.Flex]}>
-            <Image
-              source={Images.Google}
-              style={styles.Google}
+          {toast.visible && (
+            <ToastMessage
+              type={toast.type}
+              message={toast.message}
+              onHide={() => setToast({ ...toast, visible: false })}
             />
-            <Text style={[styles.Label]}>Continue with Google</Text>
-          </TouchableOpacity>
-          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
-            <Text style={[styles.Label, { textAlign: 'center', }]}>{"Don't have an account? "}</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={[styles.Label, { color: Colors.primary, fontFamily: "Bold" }]}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {toast.visible && (
-          <ToastMessage
-            type={toast.type}
-            message={toast.message}
-            onHide={() => setToast({ ...toast, visible: false })}
-          />
-        )}
-      </KeyboardAwareScrollView>
-    </SafeAreaView>
+          )}
+        </KeyboardAwareScrollView>
+      </SafeAreaView>
+    </GestureRecognizer>
   )
 }
 

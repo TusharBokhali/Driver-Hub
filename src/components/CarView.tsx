@@ -127,9 +127,6 @@ const filterData = () => {
                     data?.length > 0 &&
                     <View style={styles.Flex}>
                         <Text style={styles.Title}>{data[0]?.owner?.title}</Text>
-                        <TouchableOpacity>
-                            <Text style={[styles.ViewAll]}>View All</Text>
-                        </TouchableOpacity>
                     </View>
                 }
 
@@ -151,7 +148,7 @@ const filterData = () => {
                     contentContainerStyle={{ paddingBottom: 100, gap: 25 }}
                     keyExtractor={({ item, index }: any) => `${item?._id}`}
                     renderItem={({ item, index }) => (
-                        <Pressable style={styles.CarBox} onPress={() => { navigate('Details', { item: item }) }}>
+                        <Pressable  style={styles.CarBox} onPress={() => { navigate('Details', { item: item }) }}>
                             <View style={styles.TopFixed}>
                                 {
                                     item?.isAvailable &&

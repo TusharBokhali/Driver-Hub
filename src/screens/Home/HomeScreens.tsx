@@ -16,7 +16,7 @@ export default function HomeScreens({navigation}:any) {
   const [Search, setSearch] = useState<string>('')
   const [CarData, setCarData] = useState([]);
   const [IsLoading,setIsLoading] = useState<boolean>(false);
-  const tabWidth = (width - 40) / 3;
+  const tabWidth = (width - 40) / 2;
   const { user, setUser, AllFavorites, setAllFavorites } = useContext<any>(User);
 
   useEffect(() => {
@@ -25,9 +25,7 @@ export default function HomeScreens({navigation}:any) {
       toValue = 0;
     } else if (IsActive === "Rent") {
       toValue = tabWidth;
-    } else if (IsActive === "Service") {
-      toValue = tabWidth * 2;
-    }
+    } 
 
     Animated.spring(translateX, {
       toValue,
@@ -121,14 +119,7 @@ export default function HomeScreens({navigation}:any) {
               />
               <Text style={[styles.MenuTitle, { color: IsActive === 'Rent' ? Colors.primary : Colors.dark }]}>Rent</Text>
             </Pressable>
-            <Pressable style={styles.MenuFlex} onPress={() => setActive('Service')}>
-              <Image
-                source={Images.Services}
-                style={[styles.Icon,]}
-                tintColor={IsActive == 'Service' ? Colors.primary : Colors.dark}
-              />
-              <Text style={[styles.MenuTitle, { color: IsActive === 'Service' ? Colors.primary : Colors.dark }]}>Service</Text>
-            </Pressable>
+           
           </View>
         </View>
         <View style={{ paddingHorizontal: 15 }}>
@@ -165,7 +156,7 @@ const styles = StyleSheet.create({
   },
   Active: {
     backgroundColor: Colors.white,
-    width: '33.33%',
+    width: '48.33%',
     height: '100%',
     borderRadius: 7,
     position: 'absolute',
@@ -175,7 +166,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    width: '33.33%',
+    width: '48.33%',
     height: '100%',
     borderRadius: 7,
     justifyContent: 'center',

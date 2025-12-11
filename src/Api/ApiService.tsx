@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage"; // if using React Native
 import axios from "axios";
 
 let baseUrl = "http://192.168.1.7:5000"; // ✅ works for real device in same Wi-Fi
@@ -23,15 +24,26 @@ export const ApiService = async (
   method: ApiMethod = "POST"
 ) => {
   try {
-    let body: any = customData;
-    let headers: any = customData?.headers || {};
+    let headers: any = {};
 
-    // ✅ Handle image upload properly
+    // ✅ Include headers only if header: true
+    const includeHeader = customData?.header || false;
+    if (includeHeader) {
+      const token = await AsyncStorage.getItem("token");
+      headers = {
+        "Content-Type": customData?.profileImage ? "multipart/form-data" : "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...customData?.headers,
+      };
+    }
+
+    // ✅ Handle image upload
+    let body: any;
     if (customData?.profileImage) {
       const formData = new FormData();
 
       Object.keys(customData).forEach((key) => {
-        if (key !== "profileImage" && key !== "headers") {
+        if (key !== "profileImage" && key !== "header" && key !== "headers") {
           formData.append(key, customData[key]);
         }
       });
@@ -47,8 +59,14 @@ export const ApiService = async (
       } as any);
 
       body = formData;
-
-      
+    } else {
+      // ✅ Normal JSON payload without `header` key
+      body = {};
+      Object.keys(customData).forEach((key) => {
+        if (key !== "header" && key !== "headers" && key !== "profileImage") {
+          body[key] = customData[key];
+        }
+      });
     }
 
     const response = await axios({
@@ -61,7 +79,8 @@ export const ApiService = async (
 
     return { success: true, data: response.data };
   } catch (error: any) {
-    console.log("API Error:", error.message);
+
     return { success: false, error: error.response?.data || error.message };
   }
 };
+

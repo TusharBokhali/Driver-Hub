@@ -41,6 +41,13 @@ export const Images = {
     LogOut: require('./images/LogOut.png'),
     Help: require('./images/Help.png'),
     Back: require('./images/Back.png'),
+    Seats: require('./images/Seats.png'),
+    Music: require('./images/music.png'),
+    UpArrow: require('./images/UpArrow.png'),
+    Active: require('./images/Active.png'),
+    Pending: require('./images/Pending.png'),
+    Sale: require('./images/Sale.png'),
+    Increase: require('./images/Increase.png'),
 
 
 

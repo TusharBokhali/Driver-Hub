@@ -54,21 +54,26 @@ export default function Register({ navigation }: any) {
     }
 
     setIsLoading(true);
+    
     try {
       let res = await ApiService(Api.register, {
         email: Email.trim(),
         password: Password.trim(),
         name: name.trim(),
         role: "user",
+        header:true
       });
-      console.log(res);
+      // console.log(res);
 
       if (res?.success) {
         let user = res?.data?.user;
         navigation.replace('Login');
         <ToastMessage type="success" message="Account Created successfully!" />;
       } else {
-        <ToastMessage type="error" message={res.error?.message || "Account Created failed!"} />;
+        // Alert.alert(res?.error?.message || "");
+        setToast({ visible: true, type: 'error', message: res?.error?.message || res?.error });
+        <ToastMessage type="error" message={res?.error?.message || "Account Created failed!"} />;
+        
       }
     } catch (error: any) {
       console.log("LogIn Error:", error);
@@ -82,7 +87,7 @@ export default function Register({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1, padding: 15 }} 
     enableOnAndroid={true} 
-    extraScrollHeight={60} 
+    // extraScrollHeight={60} 
     keyboardShouldPersistTaps="handled">
 
         <TouchableOpacity onPress={() => navigation.goBack()}>

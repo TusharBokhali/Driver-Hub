@@ -23,5 +23,13 @@ export const  Colors = {
     Bookborder:'#ddd',
     placeHolder:'#ADAEBC',
     
+    
+    // Admin
+    All_Vehical:'#DBEAFE',
+    Active:'#D1FAE5',
+    Sale:'#FEF3C7',
+    Pending:'#FEE2E2',
+
+    
 
 }

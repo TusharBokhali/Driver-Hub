@@ -10,7 +10,7 @@ import { getGreeting } from './GetDaysTime';
 const CustomHeader: React.FC<BottomTabHeaderProps> = () => {
     const {navigate} = useNavigation<any>();
       const { user, setUser } = useContext<any>(User);
-  let local: string = "http://192.168.1.9:5000"
+  let local: string = "http://192.168.1.4:5000"
 
     
     return (
@@ -18,7 +18,7 @@ const CustomHeader: React.FC<BottomTabHeaderProps> = () => {
             <View  style={styles.container}>
                 <View style={styles.Flex}>
                     <Image
-                        source={user?.user?.profileImage ? {uri:local+user?.user?.profileImage} : Images.Profile}
+                        source={user?.user?.profileImage ? {uri:local+user?.user?.profileImage} : Images.Driver}
                         style={styles.Images}
                     />
                     <View>

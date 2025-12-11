@@ -4,6 +4,7 @@ import CalendarModal from '@/src/components/CalenderView';
 import { handleApiResponse } from '@/src/components/ErrorHandle';
 import { formatDate } from '@/src/components/FormatDate';
 import StarRating from '@/src/components/RatingView';
+import { timeAgo } from '@/src/components/TimeAgo';
 import { User } from '@/src/context/UserContext';
 import { Colors } from '@/src/utils/Colors';
 import { width } from '@/src/utils/Dimensions';
@@ -11,7 +12,7 @@ import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import axios from 'axios';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -143,6 +144,24 @@ export default function Details({ route, navigation }: any) {
         }
     }
 
+    const renderIcon = (icon: string) => {
+        switch (icon) {
+            case 'ac':
+                return <Image source={Images.AC} style={styles.Icon} />;
+            case 'music':
+                return <Image source={Images.Music} style={styles.Icon} />;
+            case 'seats':
+                return <Image source={Images.Seats} style={styles.Icon} />;
+            case 'camera':
+                return <Image source={Images.Camera} style={styles.Icon} />;
+            case 'wifi':
+                return <Image source={Images.WIFI} style={styles.Icon} />;
+            case 'bluetooth':
+                return <Feather name="bluetooth" size={20} color={Colors.primary} />;
+            default:
+                return <Feather name="circle" size={20} color={Colors.primary} />; 
+        }
+    };
     useEffect(() => {
         console.log(item);
 
@@ -174,10 +193,10 @@ export default function Details({ route, navigation }: any) {
                         setActiveIndex(Math.round(absoluteProgress));
                     }}
 
-                    renderItem={({ item,index: number }) => (
+                    renderItem={({ item, index: number }) => (
                         <View style={styles.ImageContainer}>
                             <Image
-                                source={item ? {uri:item} : Images.SliderImages}
+                                source={item ? { uri: item } : Images.SliderImages}
                                 style={[styles.Image, { height: imgHeight }]}
                             />
                         </View>
@@ -201,36 +220,42 @@ export default function Details({ route, navigation }: any) {
                 </View>
                 <View style={styles.DetailsContainer}>
                     <View style={styles.Flex}>
-                        <View>
-                            <Text style={styles.Heading}>BMW 3 Series</Text>
-                            <Text style={styles.Title}>Sedan • Automatic • 5 seats</Text>
+                        <View style={{ width: '80%' }}>
+                            <Text numberOfLines={2} style={styles.Heading}>{item?.title || ""} <Text style={styles.Title}>seats {item?.seats || ""}</Text>  </Text>
+
                         </View>
-                        <View style={[styles.AlignCenter, styles.Ratings]}>
-                            <Image
-                                source={Images.StarImage}
-                                style={{ width: 20, height: 20 }}
-                                resizeMode='contain'
+                        {
+                            item?.averageRating &&
+                            <View style={[styles.AlignCenter, styles.Ratings,]}>
+                                <Image
+                                    source={Images.StarImage}
+                                    style={{ width: 20, height: 20 }}
+                                    resizeMode='contain'
+                                />
+                                <Text style={styles.Title}>{parseFloat(item?.averageRating)?.toFixed(1)}</Text>
+                            </View>
+                        }
+                    </View>
+                    {
+                        item?.pricingOptions?.length > 0 &&
+                        <View style={styles.Pricing}>
+
+                            <FlatList
+                                data={item?.pricingOptions || []}
+                                nestedScrollEnabled={true}
+                                scrollEnabled={false}
+                                bounces={false}
+                                renderItem={({ item, index }) => (
+                                    <Pressable style={[styles.PriceBox, { borderColor: SelectPerPrice === 1 ? Colors.primary : Colors.mediumDark }]} onPress={() => setSelectPerice(1)}>
+                                        <Text style={[styles.Title, { fontSize: 16 }]}>{item?.currency_symbol}{item?.price || ""}</Text>
+                                        <Text style={styles.dark}>{item?.label || ""}</Text>
+                                    </Pressable>
+                                )}
                             />
-                            <Text style={styles.Title}>4.8</Text>
+
+
                         </View>
-                    </View>
-
-                    <View style={styles.Pricing}>
-                        <Pressable style={[styles.PriceBox, { borderColor: SelectPerPrice === 1 ? Colors.primary : Colors.mediumDark }]} onPress={() => setSelectPerice(1)}>
-                            <Text style={[styles.Title, { fontSize: 16 }]}>$45</Text>
-                            <Text style={styles.dark}>per hour</Text>
-                        </Pressable>
-
-                        <Pressable style={[styles.PriceBox, { borderColor: SelectPerPrice === 2 ? Colors.primary : Colors.mediumDark }]} onPress={() => setSelectPerice(2)}>
-                            <Text style={[styles.Title, { fontSize: 16 }]}>$425</Text>
-                            <Text style={styles.dark}>per day</Text>
-                        </Pressable>
-
-                        <Pressable style={[styles.PriceBox, { borderColor: SelectPerPrice === 3 ? Colors.primary : Colors.mediumDark }]} onPress={() => setSelectPerice(3)}>
-                            <Text style={[styles.Title, { fontSize: 16 }]}>$15</Text>
-                            <Text style={styles.dark}>per km</Text>
-                        </Pressable>
-                    </View>
+                    }
 
                     <View style={{ marginTop: 15 }}>
                         <Text style={[styles.Title, { marginBottom: 10 }]}>Trip Dates</Text>
@@ -257,102 +282,95 @@ export default function Details({ route, navigation }: any) {
                             </TouchableOpacity>
                         </View>
                     </View>
-
-                    <View style={styles.DriverContainer}>
-                        <Pressable style={[styles.AlignCenter, { gap: 10 }]} >
-                            <Image
-                                source={Images.Driver}
-                                style={{ width: 40, height: 40 }}
+                    {
+                        item?.driverAvailable &&
+                        <View style={styles.DriverContainer}>
+                            <Pressable style={[styles.AlignCenter, { gap: 10 }]} >
+                                <Image
+                                    source={Images.Driver}
+                                    style={{ width: 40, height: 40 }}
+                                />
+                                <View>
+                                    <Text style={[styles.Heading, { fontSize: 16 }]}>Include Driver</Text>
+                                    <Text style={styles.Title}>+{item?.driverPricing?.currency_symbol}{item?.driverPricing?.price}/{item?.driverPricing?.label}</Text>
+                                </View>
+                            </Pressable>
+                            <SwitchToggle
+                                switchOn={Driver}
+                                onPress={() => setDriver(!Driver)}
+                                circleColorOff={Colors.white}
+                                circleColorOn={Colors.white}
+                                backgroundColorOn={Colors.green}
+                                backgroundColorOff={Colors.lightGray}
+                                duration={50}
+                                containerStyle={{
+                                    marginTop: 16,
+                                    width: 50,
+                                    height: 30,
+                                    borderRadius: 25,
+                                    padding: 2,
+                                }}
+                                circleStyle={{
+                                    width: 25,
+                                    height: 25,
+                                    borderRadius: 20,
+                                }}
                             />
-                            <View>
-                                <Text style={[styles.Heading, { fontSize: 16 }]}>Include Driver</Text>
-                                <Text style={styles.Title}>+$25/hour</Text>
-                            </View>
-                        </Pressable>
-                        <SwitchToggle
-                            switchOn={Driver}
-                            onPress={() => setDriver(!Driver)}
-                            circleColorOff={Colors.white}
-                            circleColorOn={Colors.white}
-                            backgroundColorOn={Colors.green}
-                            backgroundColorOff={Colors.lightGray}
-                            duration={50}
-                            containerStyle={{
-                                marginTop: 16,
-                                width: 50,
-                                height: 30,
-                                borderRadius: 25,
-                                padding: 2,
-                            }}
-                            circleStyle={{
-                                width: 25,
-                                height: 25,
-                                borderRadius: 20,
-                            }}
-                        />
-                    </View>
+                        </View>
+                    }
                     <View style={{ marginVertical: 15 }}>
                         <Text style={[styles.Title, { marginBottom: 10, fontFamily: 'SemiBold', fontSize: 16 }]}>Features</Text>
-                        <View style={[styles.Flex, { gap: 5, }]}>
-                            <View style={[styles.Width]}>
-                                <Image
-                                    source={Images.WIFI}
-                                    style={styles.Icon}
-                                />
-                                <Text style={[styles.Title, styles.Smallest]}>WiFi</Text>
-                            </View>
-                            <View style={[styles.Width]}>
-                                <Feather name="bluetooth" size={20} color={Colors.primary} />
-                                <Text style={[styles.Title, styles.Smallest]}>Bluetooth</Text>
-                            </View>
-                            <View style={[styles.Width]}>
-                                <Image
-                                    source={Images.AC}
-                                    style={styles.Icon}
-                                />
-                                <Text style={[styles.Title, styles.Smallest]}>AC</Text>
-                            </View>
-                            <View style={[styles.Width]}>
-                                <Image
-                                    source={Images.Petroll}
-                                    style={styles.Icon}
-                                />
-                                <Text style={[styles.Title, styles.Smallest]}>Full Tank</Text>
-                            </View>
-                        </View>
-                    </View>
-                    <View style={{ marginTop: 10 }}>
-                        <View style={[styles.Flex, { marginBottom: 10 }]}>
-                            <Text style={styles.Title}>Reviews (124)</Text>
-                            <TouchableOpacity>
-                                <Text style={[styles.Title, { color: Colors.primary }]}>View All</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <View style={styles.ReviewBox}>
-                            <View style={[styles.Flex,]}>
-                                <View style={[styles.AlignCenter, { alignItems: 'flex-start' }]}>
-                                    <Image
-                                        source={Images.Profile}
-                                        style={styles.Profile}
-                                    />
-                                    <View style={{ width: '80%' }}>
-                                        <View style={[styles.Flex, { width: '100%', }]}>
-                                            <Text style={styles.Title}>Sarah Johnson</Text>
-                                            <StarRating
-                                                rating={4.5}
-                                                Size={18}
-                                            />
-                                        </View>
-                                        <Text style={styles.ReviewDescription}>
-                                            Amazing car and excellent service! The driver was professional and the vehicle was spotless. Highly recommended for business trips.
-                                        </Text>
-                                        <Text style={styles.Duration}>2 days ago</Text>
+                        <View style={[styles.Flex, { gap: 5 }]}>
+                            {item?.features.map((feature:any) => (
+                                feature.available && (
+                                    <View key={feature._id} style={styles.Width}>
+                                        {renderIcon(feature.icon)}
+                                        <Text style={[styles.Title, styles.Smallest]}>{feature?.name}</Text>
                                     </View>
-                                </View>
-                            </View>
-
+                                )
+                            ))}
                         </View>
                     </View>
+                    {
+                        item?.ratings?.length > 0 &&
+                        <View style={{ marginTop: 10 }}>
+                            <View style={[styles.Flex, { marginBottom: 10 }]}>
+                                <Text style={styles.Title}>Reviews ({item?.ratings?.length})</Text>
+                            </View>
+                            <FlatList
+                                data={item?.ratings || []}
+                                scrollEnabled={false}
+                                contentContainerStyle={{ gap: 15 }}
+                                renderItem={({ item, index }) => (
+                                    <View style={styles.ReviewBox}>
+                                        <View style={[styles.Flex,]}>
+                                            <View style={[styles.AlignCenter, { alignItems: 'flex-start' }]}>
+                                                <Image
+                                                    source={Images.Profile}
+                                                    style={styles.Profile}
+                                                />
+                                                <View style={{ width: '80%' }}>
+                                                    <View style={[styles.Flex, { width: '100%', }]}>
+                                                        <Text style={styles.Title}>Sarah Johnson</Text>
+                                                        <StarRating
+                                                            rating={item?.rating}
+                                                            Size={18}
+                                                        />
+                                                    </View>
+                                                    <Text style={styles.ReviewDescription}>
+                                                        {item?.review || ""}
+                                                    </Text>
+                                                    <Text style={styles.Duration}>{timeAgo(item?.createdAt || "")}</Text>
+                                                </View>
+                                            </View>
+                                        </View>
+
+                                    </View>
+
+                                )}
+                            />
+                        </View>
+                    }
 
                 </View>
             </ScrollView>

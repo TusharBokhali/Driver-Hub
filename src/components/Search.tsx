@@ -1,7 +1,7 @@
 import { Images } from '@/assets/Images';
 import { useIsFocused } from '@react-navigation/native';
 import React, { useEffect, useRef } from 'react';
-import { Image, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, TextInput, View } from 'react-native';
 import { Colors } from '../utils/Colors';
 
 type Input = {
@@ -39,9 +39,7 @@ export default function SearchInput({ value, setValue, Container, autoFocus = fa
           onChangeText={setValue}
         />
       </View>
-      <TouchableOpacity disabled={!edit} style={styles.Btn}>
-        <Image source={Images.Filter} style={styles.Image} />
-      </TouchableOpacity>
+     
     </View>
   );
 }

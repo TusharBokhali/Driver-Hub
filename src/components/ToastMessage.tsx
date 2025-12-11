@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, StyleSheet, Text } from 'react-native'
 import { Colors } from '../utils/Colors'
-import { height, width } from '../utils/Dimensions'
+import { width } from '../utils/Dimensions'
 
 type Props = {
   type: 'success' | 'error' | 'info'
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 10,
-    zIndex: 5,
+    zIndex: 9999,
     elevation: 5,
   },
   text: {

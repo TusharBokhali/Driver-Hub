@@ -1,29 +1,42 @@
 import { Images } from '@/assets/Images';
+import { AdminContextData } from '@/src/context/AdminContext';
 import { User } from '@/src/context/UserContext';
 import { Colors } from '@/src/utils/Colors';
 import { width } from '@/src/utils/Dimensions';
 import { FONT } from '@/src/utils/FONTS';
 import { AsyncStorageService } from '@/src/utils/store';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
 import React, { useContext, useEffect } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 export default function SplashScreens({ navigation }: any) {
     const [fontsLoaded] = useFonts(FONT);
-    const {user,setUser} = useContext<any>(User)
+    const { user, setUser } = useContext<any>(User)
+    const { AdminUser, setAdminUser } = useContext(AdminContextData);
+
     useEffect(() => {
         getUserData()
     }, [])
 
     const getUserData = async () => {
-        let users = await AsyncStorageService.getItem("USERLOGIN");
-        setUser(users)
-        if (users) {
-            navigation.replace('BottomTab')
-        }else{
-            navigation.replace('Login')
+        try {
+            const users = await AsyncStorageService.getItem("USERLOGIN");
+            const admin_users = await AsyncStorageService.getItem("ADMINUSERLOGIN");
+
+            if (users) {
+                setUser(users);
+                navigation.replace('BottomTab');
+            } else if (admin_users) {
+                setAdminUser(admin_users);
+                navigation.replace('AdminBottom');
+            } else {
+                navigation.replace('Login');
+            }
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+            navigation.replace('Login');
         }
-    }
+    };
+
     return (
         <View style={styles.container}>
 
