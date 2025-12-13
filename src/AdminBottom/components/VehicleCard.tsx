@@ -4,13 +4,14 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import React from "react";
 import {
-    Dimensions,
-    Image,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -21,13 +22,14 @@ type Props = {
   year?: string;
   km?: string;
   location?: string;
-  tags?: string[]; 
+  tags?: string[];
   price?: string;
   published?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
-  onTogglePublished?: (val: boolean) => void;
+  onTogglePublished?: (val?: boolean) => void;
   style?: any;
+  data: any
 };
 
 export default function VehicleCard({
@@ -41,16 +43,17 @@ export default function VehicleCard({
   published = true,
   onEdit,
   onDelete,
-  onTogglePublished,
+  onTogglePublished = () => { },
   style,
+  data
 }: Props) {
   return (
     <View style={[styles.card, style]}>
       <View style={styles.row}>
         {/* LEFT: image */}
         <View style={styles.imageWrap}>
-          {imageSource ? (
-            <Image source={imageSource} style={styles.image} resizeMode="cover" />
+          {data?.image?.length > 0 ? (
+            <Image source={{ uri: data?.image[0] }} style={styles.image} resizeMode="cover" />
           ) : (
             <View style={styles.placeholder}>
               <Text style={styles.placeholderText}>Toyota</Text>
@@ -67,11 +70,11 @@ export default function VehicleCard({
 
             <View style={styles.actionRow}>
               <TouchableOpacity onPress={onEdit} style={styles.iconBtn}>
-                <MaterialCommunityIcons name="square-edit-outline" size={16} color={Colors.dark } />
+                <MaterialCommunityIcons name="square-edit-outline" size={16} color={Colors.dark} />
               </TouchableOpacity>
 
               <TouchableOpacity onPress={onDelete} style={styles.iconBtn}>
-                <FontAwesome5 name="trash-alt" size={16} color={Colors.dark } />
+                <FontAwesome5 name="trash-alt" size={16} color={Colors.dark} />
               </TouchableOpacity>
             </View>
           </View>
@@ -81,35 +84,70 @@ export default function VehicleCard({
 
           {/* Tags */}
           <View style={styles.tagsRow}>
-            {tags.map((t, i) => (
-              <View
-                key={`${t}-${i}`}
-                style={[
-                  styles.tag,
-                  // style particular tag colors if needed
-                  t.toLowerCase().includes("rent") ? styles.tagPrimary : t.toLowerCase().includes("available") ? styles.tagGreen : styles.tagLight,
-                ]}
-              >
-                <Text style={styles.tagText}>{t}</Text>
-              </View>
-            ))}
+            {tags.map((t, i) => {
+              const isActive = typeof t === "string" ? true : t === true;
+
+              // label decide karo
+              const label =
+                typeof t === "string"
+                  ? t
+                  : i === 1
+                    ? "With Driver"
+                    : i === 2
+                      ? "Available"
+                      : "";
+
+              return (
+                <View
+                  key={i}
+                  style={[
+                    styles.tag,
+                    !isActive
+                      ? styles.tagDisabled
+                      : label.toLowerCase().includes("rent")
+                        ? styles.tagPrimary
+                        : label.toLowerCase().includes("available")
+                          ? styles.tagGreen
+                          : styles.tagGreen,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.tagText,
+                      !isActive && styles.tagTextDisabled,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
+
 
           <View style={styles.footerRow}>
             <Text style={styles.price}>{price}</Text>
 
             <View style={styles.publishedRow}>
               <Text style={styles.publishedText}>Published</Text>
-              <Switch
-                value={published}
-                onValueChange={(v) => onTogglePublished && onTogglePublished(v)}
-                thumbColor={published ? Colors.primary : undefined}
-                trackColor={{ false: "#d6d6d6", true: Colors.primary + "66" }}
-              />
+              <Pressable
+                onPress={() => onTogglePublished()}
+                hitSlop={10}
+                style={{ justifyContent: "center" }}
+              >
+                <Switch
+                disabled={true}
+                  pointerEvents="none"  
+                  value={published}
+                  thumbColor={published ? Colors.primary : undefined}
+                  trackColor={{ false: "#d6d6d6", true: Colors.primary + "66" }}
+                />
+              </Pressable>
             </View>
           </View>
         </View>
       </View>
+
     </View>
   );
 }
@@ -239,5 +277,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#8b95a1",
     marginRight: 6,
+  },
+  tagDisabled: {
+    backgroundColor: "#E5E7EB",
+    opacity: 0.5,
+  },
+
+  tagTextDisabled: {
+    color: "#9CA3AF",
   },
 });

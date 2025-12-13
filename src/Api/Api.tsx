@@ -1,4 +1,4 @@
-let baseUrl = "http://192.168.1.5:5000"
+let baseUrl = "http://192.168.1.7:5000"
 
 export const Api = {
     login:`${baseUrl}/api/auth/login`,
@@ -11,5 +11,7 @@ export const Api = {
     
     // Admin
     dashboard:`${baseUrl}/api/dashboard`,
+    AllVehical:`${baseUrl}/api/admin/vehicles`,
+    
 
 }

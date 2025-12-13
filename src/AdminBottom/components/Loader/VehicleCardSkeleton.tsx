@@ -1,81 +1,116 @@
-// VehicleCardSkeletonMoti.js
-import { Skeleton } from 'moti/skeleton';
-import React from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import React from "react";
+import { Dimensions, StyleSheet } from "react-native";
+import Skeleton from "react-native-reanimated-skeleton";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
-const VehicleCardSkeleton = () => {
-  const Spacer = ({ height = 16 }) => <View style={{ height }} />;
-  
-  return (
-    <View style={styles.container}>
-      <View style={styles.sortSection}>
-        <Skeleton width={120} height={20} colorMode="light" />
-        <View style={{ width: 10 }} />
-        <Skeleton width={80} height={20} colorMode="light" />
-      </View>
-      
-      <Spacer height={20} />
-      
-      {[1, 2, 3, 4, 5].map((item) => (
-        <View key={item} style={styles.carCard}>
-          <Skeleton width={width * 0.7} height={24} colorMode="light" />
-          <Spacer height={8} />
-          
-          <View style={styles.row}>
-            <Skeleton width={100} height={18} colorMode="light" />
-            <View style={{ width: 10 }} />
-            <Skeleton width={80} height={18} colorMode="light" />
-          </View>
-          <Spacer height={6} />
-          
-          <Skeleton width={100} height={18} colorMode="light" />
-          <Spacer height={6} />
-          
-          <Skeleton width={150} height={20} colorMode="light" />
-          <Spacer height={8} />
-          
-          <View style={styles.priceRow}>
-            <Skeleton width={80} height={22} colorMode="light" />
-            <Skeleton width={120} height={22} colorMode="light" />
-          </View>
-          
-          {/* Divider */}
-          {item < 5 && <View style={styles.divider} />}
-        </View>
-      ))}
-    </View>
-  );
+type Props = {
+  isLoading?: boolean;
 };
 
+export default function VehicleCardSkeleton({ isLoading = true }: Props) {
+  return (
+    <Skeleton
+      isLoading={isLoading}
+      containerStyle={styles.card}
+      boneColor="#E5E7EB"
+      highlightColor="#F3F4F6"
+      layout={[
+        // Left image box
+        {
+          key: "image",
+          width: 64,
+          height: 64,
+          borderRadius: 12,
+          marginRight: 12,
+        },
+
+        // Right content
+        {
+          key: "content",
+          flexDirection: "column",
+          children: [
+            // Title
+            {
+              key: "title",
+              width: width * 0.45,
+              height: 14,
+              borderRadius: 4,
+              marginBottom: 6,
+            },
+
+            // Subtitle
+            {
+              key: "subtitle",
+              width: width * 0.35,
+              height: 12,
+              borderRadius: 4,
+              marginBottom: 10,
+            },
+
+            // Tags row
+            {
+              key: "tags",
+              flexDirection: "row",
+              marginBottom: 10,
+              children: [
+                {
+                  key: "tag1",
+                  width: 50,
+                  height: 18,
+                  borderRadius: 9,
+                  marginRight: 6,
+                },
+                {
+                  key: "tag2",
+                  width: 80,
+                  height: 18,
+                  borderRadius: 9,
+                  marginRight: 6,
+                },
+                {
+                  key: "tag3",
+                  width: 70,
+                  height: 18,
+                  borderRadius: 9,
+                },
+              ],
+            },
+
+            // Price + switch
+            {
+              key: "footer",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              children: [
+                {
+                  key: "price",
+                  width: 80,
+                  height: 14,
+                  borderRadius: 4,
+                },
+                {
+                  key: "switch",
+                  width: 42,
+                  height: 22,
+                  borderRadius: 11,
+                },
+              ],
+            },
+          ],
+        },
+      ]}
+    />
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
-  },
-  sortSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  carCard: {
-    marginBottom: 24,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#f0f0f0',
-    marginTop: 24,
+  card: {
+    width: "100%",
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    marginBottom: 12,
   },
 });
-
-export default VehicleCardSkeleton;
