@@ -1,4 +1,5 @@
 import Fontisto from '@expo/vector-icons/Fontisto';
+import { useIsFocused } from '@react-navigation/native';
 import axios from 'axios';
 import React, { useContext, useEffect, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -12,10 +13,10 @@ import { height } from '../utils/Dimensions';
 import VehicleCardSkeleton from './components/Loader/VehicleCardSkeleton';
 import Search from './components/Search';
 import VehicleCard from './components/VehicleCard';
-export default function VehicalHandle() {
+export default function VehicalHandle({navigation}:any) {
   const [AllVehical, setAllVehical] = useState<any[]>([]);
   const { AdminUser, setAdminUser } = useContext(AdminContextData);
-
+  const Focused = useIsFocused();
   const [SearchVehical, setSearchVehical] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [CurrentType, setCurrentType] = useState<string>("All");
@@ -131,7 +132,7 @@ export default function VehicalHandle() {
     if (shouldFetch) {
       GetAllVehical();
     }
-  }, [CurrentType]);
+  }, [CurrentType,Focused]);
   return (
     <View style={styles.container}>
       <View style={styles.Flex}>
@@ -143,7 +144,7 @@ export default function VehicalHandle() {
           />
         </View>
         <View style={{ flex: 0.12 }}>
-          <TouchableOpacity style={styles.PlusIcon}>
+          <TouchableOpacity style={styles.PlusIcon} onPress={()=>navigation.navigate("CreateVehical")}>
             <Fontisto name="plus-a" size={18} color="black" />
           </TouchableOpacity>
         </View>
@@ -160,7 +161,7 @@ export default function VehicalHandle() {
             <Text style={[styles.Text, CurrentType === "Sale" && styles.TextWhite]}>Sale</Text>
           </TouchableOpacity>
         </View>
-        <Text style={[styles.MiniText]}>{AllVehical?.length} vehicles found</Text>
+        <Text style={[styles.MiniText]}>{GetSearchData()?.length} vehicles found</Text>
       </View>
 
       {

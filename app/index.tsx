@@ -1,5 +1,6 @@
 // import BottomTab from '@/src/BottomTab/BottomTab';
 import AdminBottom from '@/src/AdminBottom/AdminBottom';
+import CreateVehical from '@/src/AdminBottom/CreateVehical';
 import BottomTab from '@/src/BottomTab/BottomTab';
 import AdminContext from '@/src/context/AdminContext';
 import ToastContext from '@/src/context/ToastContext';
@@ -48,6 +49,7 @@ export default function index() {
                             {/* Admin Screens */}
                             <Stack.Screen name='LoginAdmin' component={withLayout(LoginAdmin)} />
                             <Stack.Screen name='AdminBottom' component={withLayout(AdminBottom)} />
+                            <Stack.Screen name='CreateVehical' component={withLayout(CreateVehical)} />
                         </Stack.Navigator>
                     </UserContext>
                 </AdminContext>
