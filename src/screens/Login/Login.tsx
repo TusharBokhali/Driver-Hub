@@ -4,10 +4,11 @@ import { Api } from '@/src/Api/Api'
 import { ApiService } from '@/src/Api/ApiService'
 import { handleApiResponse } from '@/src/components/ErrorHandle'
 import ToastMessage from '@/src/components/ToastMessage'
+import { User } from '@/src/context/UserContext'
 import { Colors } from '@/src/utils/Colors'
 import { AsyncStorageService } from '@/src/utils/store'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, Vibration, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -18,6 +19,8 @@ export default function Login({ navigation }: any) {
   const [EyeShow, setEyeShow] = useState<boolean>(false);
   const [IsLoading, setIsLoading] = useState<boolean>(false);
   const [swipeSequence, setSwipeSequence] = useState<string[]>([]);
+    const { user, setUser } = useContext<any>(User);
+  
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({
     visible: false,
     message: '',
@@ -90,7 +93,8 @@ export default function Login({ navigation }: any) {
 
       if (res?.success) {
         let user = res?.data?.data;
-        console.log(user);
+        // console.log(user);
+        setUser(user)
         await AsyncStorageService.storeData('USERLOGIN', user);
         navigation.replace('BottomTab');
         setToast({ visible: true, type: "success", message: "Login successful!" })

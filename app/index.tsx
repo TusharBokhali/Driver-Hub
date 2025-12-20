@@ -32,11 +32,11 @@ export default function index() {
     return (
         <>
             <StatusBar barStyle={'dark-content'} backgroundColor={Colors.white} />
-            <ToastContext>
-                <AdminContext>
-                    <UserContext>
-                        <Stack.Navigator initialRouteName='SplashScreens' screenOptions={{ headerShown: false }}>
-                            <Stack.Screen name='SplashScreens' component={withLayout(SplashScreens)} />
+             <ToastContext>
+                 <AdminContext>
+                   <UserContext>
+                        <Stack.Navigator initialRouteName='SplashScreens' screenOptions={{ headerShown: false,}}>
+                            <Stack.Screen name='SplashScreens' component={SplashScreens} />
                             <Stack.Screen name='HomeScreens' component={withLayout(HomeScreens)} />
                             <Stack.Screen name='Login' component={withLayout(Login)} />
                             <Stack.Screen name='Register' component={withLayout(Register)} />
@@ -57,3 +57,4 @@ export default function index() {
         </>
     )
 }
+

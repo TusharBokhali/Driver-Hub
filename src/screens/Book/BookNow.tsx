@@ -1,20 +1,23 @@
 import { Images } from '@/assets/Images';
 import Progress from '@/src/components/Progress';
 import { RadioButton } from '@/src/components/RadioButton';
+import { User } from '@/src/context/UserContext';
 import { Colors } from '@/src/utils/Colors';
 import { width } from '@/src/utils/Dimensions';
-import Entypo from '@expo/vector-icons/Entypo';
+import { AsyncStorageService } from '@/src/utils/store';
+import { Entypo } from '@expo/vector-icons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import ActionSheet from "react-native-actionsheet";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { Menu, MenuOption, MenuOptions, MenuTrigger } from 'react-native-popup-menu';
 import { SafeAreaView } from 'react-native-safe-area-context';
-export default function BookNow({ navigation }: any) {
-
+export default function BookNow({ navigation, route }: any) {
+    const { carData } = route?.params || {};
     const [page, setPage] = useState<number>(0);
     const [Number, setNumber] = useState<string>('+91');
     const [Email, setEmail] = useState<string>('');
@@ -28,8 +31,11 @@ export default function BookNow({ navigation }: any) {
     const scrollRef = useRef<ScrollView>(null);
     const actionSheetRef = useRef<any>(null);
     const [documents, setdocuments] = useState('');
+    const AutoFilHandle = useRef(true);
     const [NextPageAvailbleDisbled, setNextPageAvailbleDisbled] = useState(true)
+    const DocumentAutoFill = useRef(true);
     const [selectPayment, setSelectPayment] = useState<any>(null);
+    const { user, setUser, GlobalBooking, setGlobalBooking } = useContext<any>(User);
 
     const radioButtons = useMemo(() => ([
         {
@@ -57,11 +63,40 @@ export default function BookNow({ navigation }: any) {
     };
 
     const goToNextPage = () => {
-        if (page <= 3) {
+        if (page === 0) {
+            if (!Email || Email.trim() === "") {
+                setEmailError("Email is required");
+                return;
+            }
+
+            setGlobalBooking((prev: any) => ({
+                ...prev,
+                des: Description?.trim(),
+            }));
+        }
+
+        else if (page === 1) {
+            const Obj = {
+                light_bill: LightBill,
+                aadhar_card: AadharDocument,
+                bike_rc: BikeRc,
+                pan_card: PanCardDocument,
+            };
+
+            setGlobalBooking((prev: any) => ({
+                ...prev,
+                ...Obj,
+            }));
+
+            AsyncStorageService.storeData("UserDocument", Obj)
+                .then(() => console.log("Document Stored"))
+                .catch(err => console.log("Store Error", err));
+        }
+
+        if (page < 3) {
             const nextPage = page + 1;
             scrollRef.current?.scrollTo({ x: nextPage * width, animated: true });
             setPage(nextPage);
-            setNextPageAvailbleDisbled(true)
         }
     };
     const goToPreviesPage = () => {
@@ -146,9 +181,15 @@ export default function BookNow({ navigation }: any) {
         setdocuments(type)
         actionSheetRef.current.show();
     };
-
+    const autofill = () => {
+        setNumber(user?.user?.phone ? `${user.user.phone}` : "");
+        setEmail(user?.user?.email || "");
+    };
     useEffect(() => {
-        if (page == 0) {
+        setNextPageAvailbleDisbled(true);
+
+        if (page === 0) {
+
             if (Email?.length > 0) {
                 if (!/^\S+@\S+\.\S+$/.test(Email)) {
                     setEmailError('Invalid email format');
@@ -158,36 +199,70 @@ export default function BookNow({ navigation }: any) {
             }
 
 
-            if (Number?.length > 3) {
-                if (Number?.length <= 10) {
-                    if (!/^\d{13}$/.test(Number)) {
-                        setNumberError('Number must be 10 digits');
-                    }
+            if (Number?.length > 0) {
+                if (!/\d{10}$/.test(Number)) {
 
+                    setNumberError('Number by 10 digits');
                 } else {
                     setNumberError('');
                 }
             }
 
-            console.log(Email?.length > 0 && EmailError == "" && Number?.length > 0 && NumberError == "");
-
-            if (Email?.length > 0 && EmailError == "" && Number?.length > 0 && NumberError == "") {
-                setNextPageAvailbleDisbled(false)
+            if (
+                Email?.length > 0 &&
+                Number?.length > 0 &&
+                EmailError === "" &&
+                NumberError === ""
+            ) {
+                setNextPageAvailbleDisbled(false);
             }
         }
 
-        if (page == 1) {
-            if (AadharDocument !== '' && PanCardDocument !== '' && LightBill !== '') {
-                setNextPageAvailbleDisbled(false)
+        if (page === 1) {
+            let Datas = async () => {
+                try {
+                    let data = await AsyncStorageService.getItem("UserDocument");
+                    console.log(data);
+                    setAadharDocument(data?.aadhar_card || "");
+                    setPanCardDocument(data?.pan_card || "");
+                    setLightBill(data?.light_bill || "");
+
+                } catch (error) {
+                    console.log(error);
+                }
+            }
+            if ((!AadharDocument || !PanCardDocument || !LightBill) && DocumentAutoFill.current) {
+                Datas();
+                DocumentAutoFill.current = false;
+            }
+            if (AadharDocument && PanCardDocument && LightBill) {
+                setNextPageAvailbleDisbled(false);
             }
         }
 
-        if (page == 2) {
+        if (page === 2) {
             if (selectPayment !== null) {
                 setNextPageAvailbleDisbled(false);
             }
         }
-    }, [Email, Number, LightBill, AadharDocument, PanCardDocument, selectPayment, page, EmailError, NumberError]);
+
+        if ((!Number || !Email) && AutoFilHandle.current) {
+            autofill();
+            AutoFilHandle.current = false;
+        }
+
+    }, [
+        Email,
+        Number,
+        LightBill,
+        AadharDocument,
+        PanCardDocument,
+        selectPayment,
+        page,
+        EmailError,
+        NumberError
+    ]);
+
 
     return (
         <SafeAreaView style={styles.conatiner}>
@@ -202,9 +277,21 @@ export default function BookNow({ navigation }: any) {
                     <Ionicons name="arrow-back-outline" size={24} color="#374151" />
                 </TouchableOpacity>
                 <Text style={styles.Title}>Book Service</Text>
-                <TouchableOpacity>
-                    <Entypo name="dots-three-vertical" size={24} color="#374151" />
-                </TouchableOpacity>
+                <Menu>
+                    <MenuTrigger>
+                        <TouchableOpacity hitSlop={10}>
+                            <Entypo name="dots-three-vertical" size={22} color="#374151" />
+                        </TouchableOpacity>
+                    </MenuTrigger>
+
+                    <MenuOptions>
+                        <MenuOption onSelect={() => console.log('Save pressed')}>
+                            <Text style={{ color: 'black' }}>Save</Text>
+                        </MenuOption>
+                        <MenuOption onSelect={() => alert(`Save`)} text='Save' />
+
+                    </MenuOptions>
+                </Menu>
             </View>
             <Progress currentStep={page + 1} totalSteps={3} title='Service Details' />
             <ScrollView
@@ -238,6 +325,7 @@ export default function BookNow({ navigation }: any) {
                                             source={Images.Call}
                                             style={{ width: 20, height: 20 }}
                                         />
+                                        <Text style={styles.Lable}>+91</Text>
                                         <TextInput
                                             placeholder='+91 000 000-0000'
                                             placeholderTextColor={Colors.placeHolder}
@@ -245,7 +333,7 @@ export default function BookNow({ navigation }: any) {
                                             keyboardType='phone-pad'
                                             returnKeyType='next'
                                             textContentType='telephoneNumber'
-                                            maxLength={13}
+                                            maxLength={10}
                                             value={Number}
                                             onChangeText={setNumber}
                                         />
@@ -422,7 +510,7 @@ export default function BookNow({ navigation }: any) {
                             data={radioButtons}
                             style={{ marginTop: 15 }}
                             contentContainerStyle={{ gap: 8 }}
-                            renderItem={({ item,index:number }) => (
+                            renderItem={({ item, index: number }) => (
                                 <Pressable style={styles.PaymentBox} onPress={() => setSelectPayment(item)}>
                                     <RadioButton
                                         selected={selectPayment?.id === item?.id}
@@ -455,15 +543,15 @@ export default function BookNow({ navigation }: any) {
                             <View style={{ marginTop: 10 }}>
                                 <View style={styles.Flex}>
                                     <Text style={styles.lables}>Vehicle Type</Text>
-                                    <Text style={styles.value}>Not selected</Text>
+                                    <Text style={styles.value}>{carData?.vehicleType || ""}</Text>
                                 </View>
                                 <View style={styles.Flex}>
                                     <Text style={styles.lables}>Service Type</Text>
                                     <Text style={styles.value}>Basic Service</Text>
                                 </View>
                                 <View style={styles.Flex}>
-                                    <Text style={styles.lables}>Estimated Time</Text>
-                                    <Text style={styles.value}>2-3 hours</Text>
+                                    <Text style={styles.lables}>Features</Text>
+                                    <Text style={styles.value}>{carData?.features?.join(",") || "-"}</Text>
                                 </View>
                             </View>
                             <View style={styles.TopBorder}>
@@ -484,9 +572,9 @@ export default function BookNow({ navigation }: any) {
                 </View>
                 <TouchableOpacity disabled={NextPageAvailbleDisbled} style={[styles.BTN, { backgroundColor: NextPageAvailbleDisbled ? '#D1D5DB' : Colors.primary }]}
                     onPress={() => {
-                        if(page === 2){
-                            navigation.replace('BookConfirm');
-                        }else{
+                        if (page === 2) {
+                            navigation.replace('BookConfirm', { carData: carData });
+                        } else {
                             goToNextPage()
                         }
                     }}
@@ -522,6 +610,7 @@ export default function BookNow({ navigation }: any) {
                     if (index === 2) pickDocument(documents);
                 }}
             />
+
         </SafeAreaView>
     )
 }
@@ -667,6 +756,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: 'regular',
         color: Colors.black,
+        textTransform:'capitalize'
     },
     TopBorder: {
         borderTopWidth: 1,

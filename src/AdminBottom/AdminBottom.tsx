@@ -5,7 +5,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import AdminHome from './AdminHome';
-import BankScreen from './BankScreen';
+import AdminProfile from './AdminProfile';
 import ClientRequest from './ClientRequest';
 import Header from './components/Header';
 import VehicalHandle from './VehicalHandle';
@@ -40,14 +40,6 @@ export default function AdminBottom() {
           )
         }}
       />
-       <Tab.Screen name='BankScreen' component={BankScreen}
-        options={{
-          tabBarLabel: "Bank",
-          tabBarIcon: ({ focused, color, size }) => (
-            <MaterialCommunityIcons name="bank" size={size} color={color} />
-          )
-        }}
-      />
       <Tab.Screen name='ClientRequest' component={ClientRequest}
         options={{
           tabBarLabel: "Order",
@@ -56,6 +48,14 @@ export default function AdminBottom() {
           )
         }}
       />
+        <Tab.Screen name='AdminProfile' component={AdminProfile}
+         options={{
+           tabBarLabel: "Profile",
+           tabBarIcon: ({ focused, color, size }) => (
+             <MaterialCommunityIcons name="account-settings" size={size} color={color} />
+           )
+         }}
+       />
       {/* <Tab.Screen name='BankScreen' component={BankScreen}/> */}
     </Tab.Navigator>
   )

@@ -10,10 +10,11 @@ import { AdminContextData } from '../context/AdminContext';
 import { ToastShow } from '../context/ToastContext';
 import { Colors } from '../utils/Colors';
 import { height } from '../utils/Dimensions';
+import ConfirmDeleteModal from './components/ConfirmDeleteModal';
 import VehicleCardSkeleton from './components/Loader/VehicleCardSkeleton';
 import Search from './components/Search';
 import VehicleCard from './components/VehicleCard';
-export default function VehicalHandle({navigation}:any) {
+export default function VehicalHandle({ navigation }: any) {
   const [AllVehical, setAllVehical] = useState<any[]>([]);
   const { AdminUser, setAdminUser } = useContext(AdminContextData);
   const Focused = useIsFocused();
@@ -24,6 +25,7 @@ export default function VehicalHandle({navigation}:any) {
   const [Loading, setLoading] = useState<boolean>(false);
   const [VehicalRent, setVehicalRent] = useState([]);
   const [VehicalSell, setVehicalSell] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState<any>(null);
   const onFilterHandle = async (filterType: string) => {
     setCurrentType(filterType);
   }
@@ -118,6 +120,45 @@ export default function VehicalHandle({navigation}:any) {
         .includes(SearchVehical.toLowerCase())
     );
   };
+
+  const RemoveVehical = async (id: string) => {
+    setLoading(true)
+    try {
+      const response: any = await fetch(`${Api.AllVehical}/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${AdminUser?.token}`,
+        },
+      });
+
+      if (response?.status) {
+        setToast({
+          visible: true,
+          type: "success",
+          message: response?.message || "Vehical Remove SuccessFully!",
+        })
+        GetAllVehical();
+      } else {
+        setToast({
+          visible: true,
+          type: "error",
+          message: response?.message || "Something Wrong!",
+        })
+      }
+
+    } catch (error: any) {
+      setToast({
+        visible: true,
+        type: "error",
+        message: error?.response?.message ?? handleApiResponse(error)?.message ?? "Something Wrong!",
+      })
+    }
+    finally {
+      setLoading(false)
+    }
+  }
+
+
   useEffect(() => {
     let shouldFetch = false;
 
@@ -132,7 +173,7 @@ export default function VehicalHandle({navigation}:any) {
     if (shouldFetch) {
       GetAllVehical();
     }
-  }, [CurrentType,Focused]);
+  }, [CurrentType, Focused]);
   return (
     <View style={styles.container}>
       <View style={styles.Flex}>
@@ -144,7 +185,7 @@ export default function VehicalHandle({navigation}:any) {
           />
         </View>
         <View style={{ flex: 0.12 }}>
-          <TouchableOpacity style={styles.PlusIcon} onPress={()=>navigation.navigate("CreateVehical")}>
+          <TouchableOpacity style={styles.PlusIcon} onPress={() => navigation.navigate("CreateVehical")}>
             <Fontisto name="plus-a" size={18} color="black" />
           </TouchableOpacity>
         </View>
@@ -180,8 +221,8 @@ export default function VehicalHandle({navigation}:any) {
               <RefreshControl
                 refreshing={isLoading}
                 onRefresh={GetAllVehical}
-                colors={[Colors.primary]}   
-                tintColor={Colors.primary}    
+                colors={[Colors.primary]}
+                tintColor={Colors.primary}
               />
             }
             ListEmptyComponent={() => (
@@ -202,13 +243,23 @@ export default function VehicalHandle({navigation}:any) {
                 tags={[item?.vehicleType, item?.driverAvailable, item?.isAvailable]}
                 price={`${item?.currency}${Number(item?.price)?.toFixed(2)}`}
                 published={item?.isPublished}
-                onEdit={() => console.log("edit")}
-                onDelete={() => console.log("delete")}
+                onEdit={() => navigation.navigate("CreateVehical", { data: item })}
+                onDelete={() => setShowDeleteModal(item?._id)}
                 onTogglePublished={(v) => VehicalBublished(item)}
               />
             )}
           />
       }
+      <ConfirmDeleteModal
+        visible={showDeleteModal !== null}
+        
+        onCancel={() => setShowDeleteModal(null)}
+        onConfirm={async () => {
+            await RemoveVehical(showDeleteModal); 
+            setShowDeleteModal(null);
+          
+        }}
+      />
       <Loader visible={Loading} />
     </View>
   )

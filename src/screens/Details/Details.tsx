@@ -26,13 +26,14 @@ export default function Details({ route, navigation }: any) {
     const [imgHeight, setImgHeight] = useState<number>(200);
     const [ActiveIndex, setActiveIndex] = useState(0);
     const [Driver, setDriver] = useState(true);
-    const [SelectPerPrice, setSelectPerice] = useState<number>(1);
+    const [SelectPerPrice, setSelectPerice] = useState<number>(0);
     const [selectStartDate, setSelectStartDate] = useState<any>(new Date());
     const [selectEndDate, setSelectEndDate] = useState<any>(new Date());
     const [VisibleCalender, setVisibleCalender] = useState<number>(0);
     const [Like, setLike] = useState(false);
 
-    const { user, setUser, AllFavorites, setAllFavorites } = useContext<any>(User);
+
+    const { user, setUser, AllFavorites, setAllFavorites, GlobalBooking, setGlobalBooking } = useContext<any>(User);
 
     const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({
         visible: false,
@@ -159,7 +160,7 @@ export default function Details({ route, navigation }: any) {
             case 'bluetooth':
                 return <Feather name="bluetooth" size={20} color={Colors.primary} />;
             default:
-                return <Feather name="circle" size={20} color={Colors.primary} />; 
+                return <Feather name="circle" size={20} color={Colors.primary} />;
         }
     };
     useEffect(() => {
@@ -236,6 +237,9 @@ export default function Details({ route, navigation }: any) {
                             </View>
                         }
                     </View>
+                    <View style={styles.Description}>
+                        <Text style={styles.Title}>{item?.description}</Text>
+                    </View>
                     {
                         item?.pricingOptions?.length > 0 &&
                         <View style={styles.Pricing}>
@@ -243,17 +247,17 @@ export default function Details({ route, navigation }: any) {
                             <FlatList
                                 data={item?.pricingOptions || []}
                                 nestedScrollEnabled={true}
+                                numColumns={3}
+                                columnWrapperStyle={{ justifyContent: 'space-between' }}
                                 scrollEnabled={false}
                                 bounces={false}
                                 renderItem={({ item, index }) => (
-                                    <Pressable style={[styles.PriceBox, { borderColor: SelectPerPrice === 1 ? Colors.primary : Colors.mediumDark }]} onPress={() => setSelectPerice(1)}>
-                                        <Text style={[styles.Title, { fontSize: 16 }]}>{item?.currency_symbol}{item?.price || ""}</Text>
+                                    <Pressable style={[styles.PriceBox, { borderColor: SelectPerPrice === index ? Colors.primary : Colors.mediumDark }]} onPress={() => setSelectPerice(index)}>
+                                        <Text style={[styles.Title, { fontSize: 14 }]}>{item?.currency_symbol}{item?.price || ""}</Text>
                                         <Text style={styles.dark}>{item?.label || ""}</Text>
                                     </Pressable>
                                 )}
                             />
-
-
                         </View>
                     }
 
@@ -321,7 +325,7 @@ export default function Details({ route, navigation }: any) {
                     <View style={{ marginVertical: 15 }}>
                         <Text style={[styles.Title, { marginBottom: 10, fontFamily: 'SemiBold', fontSize: 16 }]}>Features</Text>
                         <View style={[styles.Flex, { gap: 5 }]}>
-                            {item?.features.map((feature:any) => (
+                            {item?.features.map((feature: any) => (
                                 feature.available && (
                                     <View key={feature._id} style={styles.Width}>
                                         {renderIcon(feature.icon)}
@@ -376,10 +380,29 @@ export default function Details({ route, navigation }: any) {
             </ScrollView>
             <View style={[styles.Fixed, { bottom: insets.bottom }]}>
                 <View>
-                    <Text style={styles.Heading}>$45/hour</Text>
-                    <Text style={[styles.Title, { color: Colors.dark }]}>Total: $180 (4 hours)</Text>
+                    <Text style={styles.Heading}>{item?.pricingOptions[SelectPerPrice]?.currency_symbol}{item?.pricingOptions[SelectPerPrice]?.price || ""}</Text>
+                    <Text style={[styles.Title, { color: Colors.dark }]}>{item?.pricingOptions[SelectPerPrice]?.label}</Text>
                 </View>
-                <TouchableOpacity style={styles.Button} onPress={() => navigation.navigate("BookNow")}>
+                <TouchableOpacity style={styles.Button} onPress={() => {
+                    let pricetype =
+                        item?.pricingOptions?.length > 0
+                            ? item?.pricingOptions[SelectPerPrice]
+                            : null;
+
+                    let Obj = {
+                        selectStartDate,
+                        selectEndDate,
+                        pricetype,
+                        Driver,
+                    };
+
+                    setGlobalBooking((prev: any) => ({
+                        ...prev,
+                        ...Obj,
+                    }));
+
+                    navigation.navigate("BookNow", { carData: item })
+                }}>
                     <Text style={[styles.Title, { color: Colors.white }]}>Book Now</Text>
                     <Image
                         source={Images.Left}
@@ -591,5 +614,8 @@ const styles = StyleSheet.create({
         borderRadius: 120,
         justifyContent: 'center',
         alignItems: 'center'
+    },
+    Description: {
+        marginTop: 10
     }
 });

@@ -51,7 +51,7 @@ export default function Saved() {
       contentContainerStyle={{paddingBottom:50}}
       showsVerticalScrollIndicator={false}
       >
-
+       
       <CarView data={AllFavorites?.cars} />
 
       </ScrollView>

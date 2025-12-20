@@ -1,5 +1,5 @@
 import { Images } from '@/assets/Images';
-import { Api } from '@/src/Api/Api';
+import { Api, baseUrl } from '@/src/Api/Api';
 import UpdateProfileModal from '@/src/components/EditProfile';
 import Loader from '@/src/components/Loader';
 import LogoutModal from '@/src/components/LogoutModal';
@@ -155,6 +155,7 @@ export default function Profile({ navigation }: any) {
     }
   };
 
+// console.log(user);
 
 
   useEffect(() => {
@@ -177,7 +178,7 @@ export default function Profile({ navigation }: any) {
 
         <View style={styles.ImageContainer}>
           <Image
-            source={user?.user?.profileImage ? { uri: local + user?.user?.profileImage } : Images.Driver}
+            source={user?.user?.profileImage ? { uri: baseUrl + user?.user?.profileImage } : Images.Driver}
             style={styles.ProfileImage}
           />
 

@@ -1,15 +1,19 @@
 import { Images } from '@/assets/Images';
+import { baseUrl } from '@/src/Api/Api';
+import { User } from '@/src/context/UserContext';
 import { Colors } from '@/src/utils/Colors';
 import { useNavigation } from '@react-navigation/native';
 import { Audio } from "expo-av";
 import * as Haptics from 'expo-haptics';
 import LottieView from 'lottie-react-native';
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, Vibration, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-export default function BookConfirm() {
+export default function BookConfirm({route}:any) {
   const {replace} = useNavigation<any>();
-
+  const { carData } = route?.params || {};
+  const { user, setUser, GlobalBooking, setGlobalBooking } = useContext<any>(User);
+  
   useEffect(() => {
     Vibration.vibrate([1000, 500, 300]);
     const handlePaymentSuccess = async () => {
@@ -41,11 +45,11 @@ export default function BookConfirm() {
       <View style={styles.UserDetails}>
         <View style={styles.Flexible}>
           <Image
-            source={Images.Profile}
-            style={{ width: 60, height: 60 }}
+            source={user?.user?.profileImage ? {uri:baseUrl+user?.user?.profileImage} : Images.Profile}
+            style={{ width: 60, height: 60,borderRadius:120}}
           />
           <View>
-            <Text style={styles.Normal}>Rajesh Kumar</Text>
+            <Text style={styles.Normal}>{user?.user?.name}</Text>
             <Text style={styles.darkText}>Enjoy!</Text>
           </View>
         </View>
@@ -58,7 +62,7 @@ export default function BookConfirm() {
             />
             <View>
               <Text style={styles.Normal}>Car Model</Text>
-              <Text style={styles.darkText}>Maruti Swift Dzire</Text>
+              <Text style={styles.darkText}>{carData?.title || ""}</Text>
             </View>
           </View>
           <Text style={[styles.Normal,{fontSize:12}]}>KA 01 AB 1234</Text>

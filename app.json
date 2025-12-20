@@ -1,16 +1,25 @@
 {
   "expo": {
-    "name": "DriverHub",
+    "name": "Driver Hub",
     "slug": "drivehub-app",
-    "version": "1.0.0",
+    "version": "20.120.25",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "driverhub",
+    "jsEngine": "hermes",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
       "developmentClient": {
       "enabled": false
     },
+     "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
+     "runtimeVersion": {
+      "policy": "appVersion"
+    },  
     "ios": {
       "supportsTablet": false
     },
@@ -52,8 +61,7 @@
       ]
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     },
     "extra": {
       "router": {},

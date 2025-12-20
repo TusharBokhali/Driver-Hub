@@ -1,6 +1,7 @@
-let baseUrl = "http://192.168.1.7:5000"
+// export let baseUrl = "http://192.168.1.7:5000"
+export let baseUrl = "https://drivehub-backend-4eb1.onrender.com"
 
-export const Api = {
+export const Api:any = {
     login:`${baseUrl}/api/auth/login`,
     register:`${baseUrl}/api/auth/register`,
     getCar:`${baseUrl}/api/vehicles`,

@@ -3,16 +3,28 @@ import { AdminContextData } from '@/src/context/AdminContext';
 import { User } from '@/src/context/UserContext';
 import { Colors } from '@/src/utils/Colors';
 import { width } from '@/src/utils/Dimensions';
-import { FONT } from '@/src/utils/FONTS';
 import { AsyncStorageService } from '@/src/utils/store';
-import { useFonts } from 'expo-font';
-import React, { useContext, useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import * as Font from "expo-font";
+import React, { useContext, useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
-export default function SplashScreens({ navigation }: any) {
-    const [fontsLoaded] = useFonts(FONT);
+export default function SplashScreens() {
+    const { replace } = useNavigation<any>();
     const { user, setUser } = useContext<any>(User)
     const { AdminUser, setAdminUser } = useContext(AdminContextData);
-
+    const [fontsLoaded, setFontsLoaded] = useState(false);
+    const loadFonts = async () => {
+        await Font.loadAsync({
+            regular: require("../../../assets/fonts/Lexend-Regular.ttf"),
+            Bold: require("../../../assets/fonts/Lexend-Bold.ttf"),
+            SemiBold: require("../../../assets/fonts/Lexend-SemiBold.ttf"),
+            ExtraBold: require("../../../assets/fonts/Lexend-ExtraBold.ttf"),
+            ExtraLight: require("../../../assets/fonts/Lexend-ExtraLight.ttf"),
+            Medium: require("../../../assets/fonts/Lexend-Medium.ttf"),
+            Thin: require("../../../assets/fonts/Lexend-Thin.ttf"),
+        });
+        setFontsLoaded(true);
+    };
     useEffect(() => {
         getUserData()
     }, [])
@@ -21,19 +33,20 @@ export default function SplashScreens({ navigation }: any) {
         try {
             const users = await AsyncStorageService.getItem("USERLOGIN");
             const admin_users = await AsyncStorageService.getItem("ADMINUSERLOGIN");
-
+            loadFonts();
             if (users) {
                 setUser(users);
-                navigation.replace('BottomTab');
+                replace('BottomTab');
             } else if (admin_users) {
                 setAdminUser(admin_users);
-                navigation.replace('AdminBottom');
+                replace('AdminBottom');
             } else {
-                navigation.replace('Login');
+                replace('Login');
             }
+       
         } catch (error) {
             console.error("Error fetching user data:", error);
-            navigation.replace('Login');
+            replace('Login');
         }
     };
 
@@ -80,3 +93,14 @@ const styles = StyleSheet.create({
         textAlign: 'center'
     }
 });
+
+// import React from 'react'
+// import { Text, View } from 'react-native'
+
+// export default function SplashScreens() {
+//   return (
+//     <View>
+//       <Text>SplashScreens</Text>
+//     </View>
+//   )
+// }

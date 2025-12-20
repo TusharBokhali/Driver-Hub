@@ -4,6 +4,7 @@ import { BottomTabHeaderProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import React, { useContext } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { baseUrl } from '../Api/Api';
 import { User } from '../context/UserContext';
 import { Colors } from '../utils/Colors';
 import { getGreeting } from './GetDaysTime';
@@ -18,7 +19,7 @@ const CustomHeader: React.FC<BottomTabHeaderProps> = () => {
             <View  style={styles.container}>
                 <View style={styles.Flex}>
                     <Image
-                        source={user?.user?.profileImage ? {uri:local+user?.user?.profileImage} : Images.Driver}
+                        source={user?.user?.profileImage ? {uri:baseUrl+user?.user?.profileImage} : Images.Driver}
                         style={styles.Images}
                     />
                     <View>

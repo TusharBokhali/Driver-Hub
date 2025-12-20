@@ -3,7 +3,7 @@ import { Feather, Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import {
     Alert,
     Dimensions,
@@ -31,7 +31,7 @@ import Animated, {
     withTiming
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Api } from "../Api/Api";
+import { Api, baseUrl } from "../Api/Api";
 import Loader from "../components/Loader";
 import { AdminContextData } from "../context/AdminContext";
 import { ToastShow } from "../context/ToastContext";
@@ -67,6 +67,7 @@ interface VehicleFormData {
     year: number | string;
     currency: string;
     isPublished: boolean;
+    features: string[];
 }
 
 interface FormErrors {
@@ -75,8 +76,10 @@ interface FormErrors {
 
 
 
-export default function CreateVehicle({ navigation }: any) {
+export default function CreateVehicle({ navigation, route }: any) {
     const scrollRef = useRef<ScrollView>(null);
+    const { data } = route?.params || {};
+
     const { AdminUser } = useContext(AdminContextData);
     const { setToast } = useContext(ToastShow);
 
@@ -106,17 +109,19 @@ export default function CreateVehicle({ navigation }: any) {
         fuelType: "petrol",
         year: new Date().getFullYear().toString(),
         currency: "₹",
-        isPublished: false
+        isPublished: false,
+        features: [],
     });
 
     // Additional states
     const [images, setImages] = useState<string[]>([]);
     const [errors, setErrors] = useState<FormErrors>({});
-
+    const [FeaturesData, setFeaturesData] = useState<any[]>([]);
     // Modal states
     const [openCategory, setOpenCategory] = useState(false);
     const [openVehicleType, setOpenVehicleType] = useState(false);
     const [openFuelType, setOpenFuelType] = useState(false);
+    const [openFeature, setOpenFeatures] = useState(false);
     const [openTransmission, setOpenTransmission] = useState(false);
     const [openRentType, setOpenRentType] = useState(false);
 
@@ -134,7 +139,7 @@ export default function CreateVehicle({ navigation }: any) {
         validateField(field, value);
     };
 
-    /* ================= IMAGE HANDLING ================= */
+
 
     const pickImages = async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -167,7 +172,56 @@ export default function CreateVehicle({ navigation }: any) {
         setImages(prev => prev.filter((_, i) => i !== index));
     };
 
-    /* ================= VALIDATION ================= */
+
+    useEffect(() => {
+        if (!data) return;
+
+        setFormData(prev => ({
+            ...prev,
+
+
+            title: data?.title ?? "",
+            description: data?.description ?? "",
+            category: data?.category ?? "",
+            vehicleType: data?.vehicleType ?? "",
+            rentType: data?.rentType ?? "per_km",
+
+
+            price: data?.price ? String(data.price) : "",
+            dailyPrice: data?.dailyPrice ? String(data.dailyPrice) : "",
+            hourlyPrice: data?.hourlyPrice ? String(data.hourlyPrice) : "",
+            perKmPrice: data?.perKmPrice ? String(data.perKmPrice) : "",
+
+
+            driverRequired: Boolean(data?.driverRequired),
+            driverAvailable: Boolean(data?.driverAvailable),
+            driverPrice: data?.driverPrice ? String(data.driverPrice) : "",
+            driverLabel: data?.driverPricing?.label ?? "with Driver",
+
+
+            location: data?.location ?? "",
+            mileage: data?.mileage ? String(data.mileage) : "",
+            seats: data?.seats ? String(data.seats) : "4",
+            transmission: data?.transmission ?? "manual",
+            fuelType: data?.fuelType ?? "petrol",
+            year: data?.year ? String(data.year) : new Date().getFullYear().toString(),
+
+
+            currency: data?.currency ?? "₹",
+            isPublished: Boolean(data?.isPublished),
+        }));
+
+
+        if (Array.isArray(data?.images)) {
+            const imageUrls = data.images.map((img: any) =>
+                img?.url?.startsWith("http")
+                    ? img.url
+                    : `${baseUrl}${img.url}`
+            );
+            setImages(imageUrls);
+        }
+
+    }, [data]);
 
     const validateField = (field: keyof VehicleFormData, value: any) => {
         const newErrors = { ...errors };
@@ -236,7 +290,7 @@ export default function CreateVehicle({ navigation }: any) {
         const newErrors: FormErrors = {};
 
         switch (stepNumber) {
-            case 1: // Basic Info
+            case 1:
                 if (!images.length) newErrors.images = 'Add at least one image';
                 if (!formData.title.trim()) newErrors.title = 'Vehicle title is required';
                 if (!formData.category) newErrors.category = 'Please select category';
@@ -244,14 +298,14 @@ export default function CreateVehicle({ navigation }: any) {
                 if (!formData.location.trim()) newErrors.location = 'Location is required';
                 break;
 
-            case 2: // Specifications
+            case 2:
                 if (!formData.seats) newErrors.seats = 'Seats count is required';
                 if (!formData.year) newErrors.year = 'Manufacturing year is required';
                 if (!formData.fuelType) newErrors.fuelType = 'Please select fuel type';
                 if (!formData.transmission) newErrors.transmission = 'Please select transmission';
                 break;
 
-            case 3: // Pricing
+            case 3:
                 if (!formData.price || isNaN(Number(formData.price)) || Number(formData.price) <= 0) {
                     newErrors.price = 'Enter valid base price';
                 }
@@ -283,7 +337,7 @@ export default function CreateVehicle({ navigation }: any) {
 
     const nextStep = () => {
         if (validateStep(step)) {
-            // Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
             setStep(prev => {
                 const next = prev + 1;
                 progressAnim.value = withTiming((next - 1) / (totalSteps - 1));
@@ -316,6 +370,9 @@ export default function CreateVehicle({ navigation }: any) {
             formDataToSend.append("vehicleType", formData.vehicleType);
             formDataToSend.append("rentType", formData.rentType);
             formDataToSend.append("price", String(formData.price));
+            FeaturesData.forEach(feature => {
+                formDataToSend.append("features[]", feature);
+            });
 
             if (formData.dailyPrice) {
                 formDataToSend.append("dailyPrice", String(formData.dailyPrice));
@@ -357,7 +414,7 @@ export default function CreateVehicle({ navigation }: any) {
                         ? uri.startsWith("file://")
                             ? uri
                             : `file://${uri}`
-                        : uri; 
+                        : uri;
 
                 formDataToSend.append("images", {
                     uri: finalUri,
@@ -431,6 +488,7 @@ export default function CreateVehicle({ navigation }: any) {
                     year: new Date().getFullYear().toString(),
                     currency: "₹",
                     isPublished: false,
+                    features: [],
                 });
                 setImages([]);
                 setErrors({});
@@ -464,6 +522,121 @@ export default function CreateVehicle({ navigation }: any) {
         }
     };
 
+    const VehicalUpdate = async () => {
+        if (!validateStep(4)) return;
+
+        setIsLoading(true);
+        cardScale.value = withTiming(0.98, { duration: 100 });
+
+        try {
+            const vehicleId = data?._id;
+            if (!vehicleId) {
+                throw new Error("Vehicle ID not found");
+            }
+
+            const formDataToSend = new FormData();
+
+            formDataToSend.append("title", formData.title);
+            formDataToSend.append("description", formData.description || "");
+            formDataToSend.append("category", formData.category);
+            formDataToSend.append("vehicleType", formData.vehicleType);
+            formDataToSend.append("rentType", formData.rentType);
+            formDataToSend.append("price", String(formData.price));
+
+            if (formData.dailyPrice) {
+                formDataToSend.append("dailyPrice", String(formData.dailyPrice));
+            }
+            if (formData.hourlyPrice) {
+                formDataToSend.append("hourlyPrice", String(formData.hourlyPrice));
+            }
+            if (formData.perKmPrice) {
+                formDataToSend.append("perKmPrice", String(formData.perKmPrice));
+            }
+
+
+            formDataToSend.append("driverRequired", String(formData.driverRequired));
+            formDataToSend.append("driverAvailable", String(formData.driverAvailable));
+            formDataToSend.append(
+                "driverPrice",
+                formData.driverAvailable ? String(formData.driverPrice) : "0"
+            );
+
+
+            formDataToSend.append("location", formData.location || "");
+            formDataToSend.append("mileage", String(formData.mileage || 0));
+            formDataToSend.append("seats", String(formData.seats || 4));
+            formDataToSend.append(
+                "transmission",
+                formData.transmission || "automatic"
+            );
+            formDataToSend.append("fuelType", formData.fuelType || "petrol");
+            formDataToSend.append(
+                "year",
+                String(formData.year || new Date().getFullYear())
+            );
+
+            formDataToSend.append("currency", formData.currency || "₹");
+            formDataToSend.append("isPublished", String(formData.isPublished));
+
+
+            images.forEach((uri, index) => {
+
+                if (!uri || uri.startsWith("http")) return;
+
+                const finalUri =
+                    Platform.OS === "android"
+                        ? uri.startsWith("file://")
+                            ? uri
+                            : `file://${uri}`
+                        : uri;
+
+                formDataToSend.append("images", {
+                    uri: finalUri,
+                    name: `vehicle_${Date.now()}_${index}.jpg`,
+                    type: "image/jpeg",
+                } as any);
+            });
+
+            const response = await fetch(`${Api.AllVehical}/${vehicleId}`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${AdminUser?.token}`,
+                },
+                body: formDataToSend,
+            });
+
+            const responseData = await response.json();
+
+            if (!response.ok || (!responseData?.status && !responseData?.success)) {
+                console.error("API Error:", responseData);
+                throw new Error(responseData?.message || "Vehicle update failed");
+            }
+
+            /* ===== SUCCESS ===== */
+            setToast({
+                visible: true,
+                type: "success",
+                message: responseData?.message || "🚗 Vehicle updated successfully!",
+            });
+
+            navigation.goBack();
+
+        } catch (error: any) {
+            console.error("=== VEHICLE UPDATE ERROR ===");
+            console.error("Message:", error?.message);
+
+            setToast({
+                visible: true,
+                type: "error",
+                message: error?.message || "Failed to update vehicle",
+            });
+        } finally {
+            setIsLoading(false);
+            cardScale.value = withSpring(1);
+        }
+    };
+
+
 
 
     const animatedSubmitStyle = useAnimatedStyle(() => {
@@ -478,7 +651,6 @@ export default function CreateVehicle({ navigation }: any) {
         };
     });
 
-    /* ================= RENDER FUNCTIONS ================= */
 
     const renderProgressBar = () => (
         <Animated.View entering={FadeInDown} style={styles.progressContainer}>
@@ -616,7 +788,34 @@ export default function CreateVehicle({ navigation }: any) {
                     error={errors.vehicleType}
                     icon="car-sport"
                 />
+                <Select
+                    label="Features *"
+                    value={""}
+                    onPress={() => setOpenFeatures(true)}
+                    error={errors.vehicleType}
+                    icon="bag-check"
+                />
             </Animated.View>
+            <View style={styles.Flex}>
+                {
+                    FeaturesData?.map((el, index) => (
+                        <Pressable key={`${el}-${index}`} style={styles.featureChip} onPress={() => setFeaturesData(pre => pre.filter(item => item !== el))}>
+                            <Text style={styles.featureText}>{el}</Text>
+                            <Pressable
+                                onPress={() =>
+                                    setFeaturesData((prev: string[]) =>
+                                        prev.filter(item => item !== el)
+                                    )
+                                }
+                                hitSlop={10}
+                                style={styles.removeBtn}
+                            >
+                                <Text style={styles.removeText}>✕</Text>
+                            </Pressable>
+                        </Pressable>
+                    ))
+                }
+            </View>
         </Animated.View>
     );
 
@@ -949,21 +1148,19 @@ export default function CreateVehicle({ navigation }: any) {
             ) : (
                 <Animated.View style={[styles.submitButton, animatedSubmitStyle]}>
                     <Pressable
-                        onPress={onCreateVehicle}
+                        onPress={() => data ? VehicalUpdate() : onCreateVehicle()}
                         style={({ pressed }) => [
                             styles.submitPressable,
                             pressed && styles.submitPressed
                         ]}
                     >
                         <Feather name="check-circle" size={18} color="#fff" />
-                        <Text style={styles.submitText}>Create Vehicle</Text>
+                        <Text style={styles.submitText}>{data ? "Update Vehical" : "Create Vehicle"}</Text>
                     </Pressable>
                 </Animated.View>
             )}
         </Animated.View>
     );
-
-    /* ================= UI ================= */
 
     return (
         <SafeAreaView style={styles.root}>
@@ -998,7 +1195,7 @@ export default function CreateVehicle({ navigation }: any) {
             <CategoryModal
                 visible={openCategory}
                 onClose={() => setOpenCategory(false)}
-                onSelect={(value) => {
+                onSelect={(value: any) => {
                     updateFormData('category', value);
                     setOpenCategory(false);
                 }}
@@ -1006,15 +1203,28 @@ export default function CreateVehicle({ navigation }: any) {
             <VehicleTypeModal
                 visible={openVehicleType}
                 onClose={() => setOpenVehicleType(false)}
-                onSelect={(value) => {
+                onSelect={(value: any) => {
                     updateFormData('vehicleType', value);
                     setOpenVehicleType(false);
+                }}
+            />
+            <FeaturesModal
+                visible={openFeature}
+                onClose={() => setOpenFeatures(false)}
+                onSelect={(value: any[]) => {
+                    setFeaturesData((prev: any[]) => {
+                        const merged = [...FeaturesData];
+                        merged.push(value)
+                        return Array.from(new Set(merged));
+                    });
+
+                    setOpenFeatures(false);
                 }}
             />
             <FuelTypeModal
                 visible={openFuelType}
                 onClose={() => setOpenFuelType(false)}
-                onSelect={(value) => {
+                onSelect={(value: any) => {
                     updateFormData('fuelType', value);
                     setOpenFuelType(false);
                 }}
@@ -1022,7 +1232,7 @@ export default function CreateVehicle({ navigation }: any) {
             <TransmissionModal
                 visible={openTransmission}
                 onClose={() => setOpenTransmission(false)}
-                onSelect={(value) => {
+                onSelect={(value: any) => {
                     updateFormData('transmission', value);
                     setOpenTransmission(false);
                 }}
@@ -1030,7 +1240,7 @@ export default function CreateVehicle({ navigation }: any) {
             <RentTypeModal
                 visible={openRentType}
                 onClose={() => setOpenRentType(false)}
-                onSelect={(value) => {
+                onSelect={(value: any) => {
                     updateFormData('rentType', value);
                     setOpenRentType(false);
                 }}
@@ -1042,7 +1252,7 @@ export default function CreateVehicle({ navigation }: any) {
     );
 }
 
-/* ================= COMPONENTS ================= */
+
 
 const Field = ({
     label,
@@ -1180,7 +1390,7 @@ const Select = ({ label, value, onPress, error, icon }: any) => (
     </Pressable>
 );
 
-/* ================= MODAL COMPONENTS ================= */
+
 
 const BaseModal = ({ visible, title, options, onClose, onSelect }: any) => {
     const translateY = useSharedValue(300);
@@ -1188,7 +1398,6 @@ const BaseModal = ({ visible, title, options, onClose, onSelect }: any) => {
     React.useEffect(() => {
         if (visible) {
             translateY.value = withSpring(0, {
-                damping: 20,
                 stiffness: 200
             });
         } else {
@@ -1269,6 +1478,19 @@ const VehicleTypeModal = (props: any) => (
         options={[
             { label: "sell", icon: "speedometer", color: "#10B981", subtitle: "Budget friendly" },
             { label: "rent", icon: "car-sedan", color: "#3B82F6", subtitle: "Small size" },
+
+        ]}
+    />
+);
+const FeaturesModal = (props: any) => (
+    <BaseModal
+        {...props}
+        title="Select Features"
+        options={[
+            { label: "ac ", icon: "speedometer", color: "#10B981", subtitle: "High" },
+            { label: "camera", icon: "camera", color: "#3B82F6", subtitle: "Selfie" },
+            { label: "wifi", icon: "wifi", color: "#3B82F6", subtitle: "Strong" },
+            { label: "bluetooth", icon: "bluetooth", color: "#3B82F6", subtitle: "Music" },
 
         ]}
     />
@@ -1419,6 +1641,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         color: '#0F172A',
+        textTransform: "capitalize"
     },
     // Image Upload Styles
     imageAdd: {
@@ -1587,6 +1810,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
         color: '#64748B',
+        textTransform: "capitalize"
     },
     selectLabelError: {
         color: Colors.red,
@@ -1600,6 +1824,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         color: '#0F172A',
+        textTransform: 'capitalize',
     },
     selectValuePlaceholder: {
         color: '#94A3B8',
@@ -1819,6 +2044,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#0F172A',
         marginBottom: 2,
+        textTransform: 'capitalize'
     },
     optionSubtitle: {
         fontSize: 12,
@@ -1829,4 +2055,55 @@ const styles = StyleSheet.create({
         opacity: 0.7,
         transform: [{ scale: 0.98 }],
     },
+    featuresWrapper: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 10,
+        marginTop: 10,
+    },
+
+    featureChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F5F7FB',
+        borderRadius: 20,
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+
+        shadowColor: '#000',
+        shadowOpacity: 0.05,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 6,
+        elevation: 2,
+    },
+
+    featureText: {
+        fontSize: 14,
+        fontFamily: 'Medium',
+        color: '#333',
+        textTransform: 'capitalize'
+    },
+
+    removeBtn: {
+        marginLeft: 8,
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+        backgroundColor: '#E74C3C',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    removeText: {
+        color: '#fff',
+        fontSize: 12,
+        lineHeight: 12,
+        fontWeight: 'bold',
+    },
+    Flex: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        flexWrap: 'wrap'
+    }
 });
