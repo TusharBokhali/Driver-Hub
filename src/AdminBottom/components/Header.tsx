@@ -14,9 +14,6 @@ export default function Header(props: any) {
     const second = parts[1]?.[0] || "";
     const initials = second ? first + second : first;
 
-// console.log(AdminUser);
-
-
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.SimpleFlex}>

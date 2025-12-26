@@ -3,6 +3,7 @@ import { Api } from '@/src/Api/Api';
 import CalendarModal from '@/src/components/CalenderView';
 import { handleApiResponse } from '@/src/components/ErrorHandle';
 import { formatDate } from '@/src/components/FormatDate';
+import { PriceView } from '@/src/components/Priceview';
 import StarRating from '@/src/components/RatingView';
 import { timeAgo } from '@/src/components/TimeAgo';
 import { User } from '@/src/context/UserContext';
@@ -253,7 +254,7 @@ export default function Details({ route, navigation }: any) {
                                 bounces={false}
                                 renderItem={({ item, index }) => (
                                     <Pressable style={[styles.PriceBox, { borderColor: SelectPerPrice === index ? Colors.primary : Colors.mediumDark }]} onPress={() => setSelectPerice(index)}>
-                                        <Text style={[styles.Title, { fontSize: 14 }]}>{item?.currency_symbol}{item?.price || ""}</Text>
+                                        <Text style={[styles.Title, { fontSize: 14 }]}>{item?.currency_symbol}{PriceView(item?.price) || ""}</Text>
                                         <Text style={styles.dark}>{item?.label || ""}</Text>
                                     </Pressable>
                                 )}

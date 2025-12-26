@@ -2,7 +2,7 @@ import { Images } from '@/assets/Images';
 import { Api } from '@/src/Api/Api';
 import CarouselSlider from '@/src/components/CarouselSlider';
 import CarView from '@/src/components/CarView';
-import SearchInput from '@/src/components/Search';
+import SearchInput from '@/src/components/SearchBar';
 import { User } from '@/src/context/UserContext';
 import { Colors } from '@/src/utils/Colors';
 import { width } from '@/src/utils/Dimensions';
@@ -98,7 +98,13 @@ export default function HomeScreens({ navigation }: any) {
   return (
     <View style={styles.container}>
       <Pressable style={{ paddingHorizontal: 15 }} onPress={() => navigation.navigate("Search")}>
-        <SearchInput value={Search} setValue={setSearch} Container={styles.SearchStyle} edit={false} />
+        <SearchInput
+          value={Search}
+          setValue={setSearch}
+          Container={styles.SearchStyle}
+          edit={false}
+        />
+
       </Pressable>
       <ScrollView
         style={styles.Scroll}

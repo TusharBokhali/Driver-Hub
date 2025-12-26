@@ -2,6 +2,7 @@ import { Images } from "@/assets/Images";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
+import LottieView from "lottie-react-native";
 import React, { useContext, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -37,7 +38,7 @@ export default function CarView({
     setAnimateKey((prev) => prev + 1);
   }, []);
 
-  
+
 
   const GetFavoritesData = async () => {
     try {
@@ -147,11 +148,20 @@ export default function CarView({
               <View
                 style={[
                   styles.Flex,
-                  { height: height * 0.35, width: width - 25,justifyContent:'center',alignItems:'center' },
+                  { height: height * 0.65, width: width - 25, justifyContent: 'center', alignItems: 'center', flexDirection: 'column' },
                 ]}
               >
-                <Text style={[styles.Title, { textAlign: "center" }]}>
-                  No Data
+                <LottieView
+                  autoPlay
+                  loop={false}
+                  style={{
+                    width: 150,
+                    height: 150,
+                  }}
+                  source={require('../Animation/NoNotification.json')}
+                />
+                <Text style={[styles.Title, { textAlign: "center", color: Colors.dark }]}>
+                  No Favorites Found
                 </Text>
               </View>
             ) : null
@@ -161,7 +171,7 @@ export default function CarView({
               <View
                 style={[
                   styles.Flex,
-                  { height: height * 0.35, width: width - 25, justifyContent:'center',alignItems:'center'},
+                  { height: height * 0.35, width: width - 25, justifyContent: 'center', alignItems: 'center' },
                 ]}
               >
                 <ActivityIndicator
@@ -240,7 +250,7 @@ export default function CarView({
         />
       </View>
 
-    
+
     </Animated.View>
   );
 }

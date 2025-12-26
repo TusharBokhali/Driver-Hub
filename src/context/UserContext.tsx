@@ -6,8 +6,9 @@ export default function UserContext({children}:any) {
     const [CurrentBookData,setCurrentBookData] = useState(null);
     const [AllFavorites,setAllFavorites] = useState<any>([]);
     const [GlobalBooking,setGlobalBooking] = useState<any>(null);
+    const [UnreadMessages,setUnreadMessages] = useState<number>(0);
   return (
-    <User.Provider value={{user,setUser,CurrentBookData,setCurrentBookData,AllFavorites,setAllFavorites,GlobalBooking,setGlobalBooking}}>
+    <User.Provider value={{user,setUser,CurrentBookData,setCurrentBookData,AllFavorites,setAllFavorites,GlobalBooking,setGlobalBooking,UnreadMessages,setUnreadMessages}}>
         {
             children
         }

@@ -1,4 +1,7 @@
 import { Images } from '@/assets/Images';
+import { Api } from '@/src/Api/Api';
+import Loader from '@/src/components/Loader';
+import { PriceView } from '@/src/components/Priceview';
 import Progress from '@/src/components/Progress';
 import { RadioButton } from '@/src/components/RadioButton';
 import { User } from '@/src/context/UserContext';
@@ -8,6 +11,7 @@ import { AsyncStorageService } from '@/src/utils/store';
 import { Entypo } from '@expo/vector-icons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import axios from 'axios';
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -32,11 +36,11 @@ export default function BookNow({ navigation, route }: any) {
     const actionSheetRef = useRef<any>(null);
     const [documents, setdocuments] = useState('');
     const AutoFilHandle = useRef(true);
-    const [NextPageAvailbleDisbled, setNextPageAvailbleDisbled] = useState(true)
+    const [NextPageAvailbleDisbled, setNextPageAvailbleDisbled] = useState(true);
     const DocumentAutoFill = useRef(true);
     const [selectPayment, setSelectPayment] = useState<any>(null);
     const { user, setUser, GlobalBooking, setGlobalBooking } = useContext<any>(User);
-
+    const [Loading, setLoading] = useState<boolean>(false);
     const radioButtons = useMemo(() => ([
         {
             id: 1,
@@ -71,6 +75,9 @@ export default function BookNow({ navigation, route }: any) {
 
             setGlobalBooking((prev: any) => ({
                 ...prev,
+                carData,
+                Email,
+                Number,
                 des: Description?.trim(),
             }));
         }
@@ -243,6 +250,8 @@ export default function BookNow({ navigation, route }: any) {
         if (page === 2) {
             if (selectPayment !== null) {
                 setNextPageAvailbleDisbled(false);
+            } else {
+                setNextPageAvailbleDisbled(true)
             }
         }
 
@@ -262,6 +271,112 @@ export default function BookNow({ navigation, route }: any) {
         EmailError,
         NumberError
     ]);
+    const normalizeDates = (start: any, end: any) => {
+        const s = new Date(start);
+        let e = new Date(end);
+
+        if (e <= s) {
+            e = new Date(s.getTime() + 60 * 60 * 1000);
+        }
+
+        return {
+            startISO: s.toISOString(),
+            endISO: e.toISOString(),
+        };
+    };
+    const VehicalBookingFun = async () => {
+        if (Loading) return;
+        const { startISO, endISO } = normalizeDates(
+            GlobalBooking.selectStartDate,
+            GlobalBooking.selectEndDate
+        );
+        try {
+            setLoading(true);
+
+            if (!GlobalBooking?.Number || !GlobalBooking?.carData?._id) {
+                throw new Error("Required booking details missing");
+            }
+
+            const formData = new FormData();
+
+            formData.append("phone", `91${GlobalBooking.Number}`);
+            formData.append("email", GlobalBooking.Email ?? "");
+            formData.append("description", GlobalBooking.des ?? "");
+            formData.append("vehicleId", GlobalBooking.carData._id);
+            formData.append(
+                "paymentMethod",
+                GlobalBooking.payment_type?.value
+                    ?.toLowerCase()
+                    ?.includes("online")
+                    ? "online"
+                    : "pay_to_driver"
+            );
+
+            formData.append("driverIncluded", GlobalBooking.Driver ? "true" : "false");
+
+            const toISO = (d: any) =>
+                d instanceof Date ? d.toISOString() : new Date(d).toISOString();
+
+            formData.append("startDate", startISO);
+            formData.append("endDate", endISO);
+
+            if (GlobalBooking.pricetype) {
+                formData.append("priceType", JSON.stringify(GlobalBooking.pricetype));
+            }
+
+            const documents = [
+                GlobalBooking.light_bill,
+                GlobalBooking.pan_card,
+                GlobalBooking.aadhar_card,
+                GlobalBooking.bike_rc,
+            ];
+
+            documents.forEach((uri, index) => {
+                if (!uri) return;
+                formData.append("documents", {
+                    uri,
+                    name: `document_${index}_${Date.now()}.jpg`,
+                    type: "image/jpeg",
+                } as any);
+            });
+            console.log("formData", formData);
+
+
+            const res = await axios.post(Api.Vehical_booking, formData, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${user?.token}`,
+
+                },
+                timeout: 60000,
+                maxBodyLength: Infinity,
+                maxContentLength: Infinity,
+            });
+
+            if (!res?.data?.success) {
+                throw new Error(res?.data?.message || "Booking failed");
+            }
+
+            if (res?.data?.status) {
+                console.log("Booking successful", res.data);
+            }
+        } catch (error: any) {
+            if (axios.isAxiosError(error)) {
+                if (error.code === "ECONNABORTED") {
+                    console.error("Request timeout");
+                } else if (error.message === "Network Error") {
+                    console.error("Network error");
+                } else {
+                    console.error(error.response?.data || error.message);
+                }
+            } else {
+                console.error(error.message);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
 
     return (
@@ -511,7 +626,17 @@ export default function BookNow({ navigation, route }: any) {
                             style={{ marginTop: 15 }}
                             contentContainerStyle={{ gap: 8 }}
                             renderItem={({ item, index: number }) => (
-                                <Pressable style={styles.PaymentBox} onPress={() => setSelectPayment(item)}>
+                                <Pressable
+                                    style={styles.PaymentBox}
+                                    onPress={() => {
+                                        setSelectPayment(item);
+                                        setGlobalBooking((prev: any) => ({
+                                            ...prev,
+                                            payment_type: item,
+                                        }));
+                                    }}
+                                >
+
                                     <RadioButton
                                         selected={selectPayment?.id === item?.id}
                                         onPress={() => setSelectPayment(item)}
@@ -568,12 +693,13 @@ export default function BookNow({ navigation, route }: any) {
             <View style={styles.Fixed}>
                 <View style={styles.Flex}>
                     <Text style={styles.Normal}>Total:</Text>
-                    <Text style={styles.Title}>$93.19</Text>
+                    <Text style={styles.Title}>{GlobalBooking?.pricetype?.currency_symbol}{PriceView(GlobalBooking?.pricetype?.price)}</Text>
                 </View>
                 <TouchableOpacity disabled={NextPageAvailbleDisbled} style={[styles.BTN, { backgroundColor: NextPageAvailbleDisbled ? '#D1D5DB' : Colors.primary }]}
                     onPress={() => {
                         if (page === 2) {
-                            navigation.replace('BookConfirm', { carData: carData });
+                            VehicalBookingFun()
+                            // navigation.replace('BookConfirm', { carData: carData });
                         } else {
                             goToNextPage()
                         }
@@ -610,7 +736,7 @@ export default function BookNow({ navigation, route }: any) {
                     if (index === 2) pickDocument(documents);
                 }}
             />
-
+            <Loader visible={Loading} text='Booking...' />
         </SafeAreaView>
     )
 }
@@ -756,7 +882,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: 'regular',
         color: Colors.black,
-        textTransform:'capitalize'
+        textTransform: 'capitalize'
     },
     TopBorder: {
         borderTopWidth: 1,

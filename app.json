@@ -9,21 +9,22 @@
     "jsEngine": "hermes",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-      "developmentClient": {
+    "developmentClient": {
       "enabled": false
     },
-     "updates": {
+    "updates": {
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0
     },
-     "runtimeVersion": {
+    "runtimeVersion": {
       "policy": "appVersion"
-    },  
+    },
     "ios": {
       "supportsTablet": false
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/icon.png",
@@ -40,6 +41,7 @@
       "favicon": "./assets/images/icon.png"
     },
     "plugins": [
+      "@react-native-firebase/app",
       "expo-router",
       [
         "expo-splash-screen",
@@ -58,7 +60,17 @@
         {
           "photosPermission": "The app accesses your photos to let you share them with your friends."
         }
-      ]
+      ],
+      [
+        "expo-notifications"
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps._some_id_here_"
+        }
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

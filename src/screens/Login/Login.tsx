@@ -1,26 +1,38 @@
 /* eslint-disable no-unused-expressions */
 import { Images } from '@/assets/Images'
 import { Api } from '@/src/Api/Api'
-import { ApiService } from '@/src/Api/ApiService'
-import { handleApiResponse } from '@/src/components/ErrorHandle'
+import { registerForPushNotificationsAsync } from '@/src/components/registerForPushNotificationsAsync'
 import ToastMessage from '@/src/components/ToastMessage'
 import { User } from '@/src/context/UserContext'
 import { Colors } from '@/src/utils/Colors'
 import { AsyncStorageService } from '@/src/utils/store'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  isSuccessResponse,
+  statusCodes
+} from '@react-native-google-signin/google-signin'
+import axios from 'axios'
 import React, { useContext, useState } from 'react'
 import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, Vibration, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import GestureRecognizer from 'react-native-swipe-gestures'
+GoogleSignin.configure({
+  webClientId: "110259978518769602216",
+  offlineAccess: true,
+  forceCodeForRefreshToken: true,
+
+});
 export default function Login({ navigation }: any) {
   const [Email, setEmail] = useState<string>('');
   const [Password, setPassword] = useState<string>('');
   const [EyeShow, setEyeShow] = useState<boolean>(false);
   const [IsLoading, setIsLoading] = useState<boolean>(false);
   const [swipeSequence, setSwipeSequence] = useState<string[]>([]);
-    const { user, setUser } = useContext<any>(User);
-  
+  const { user, setUser } = useContext<any>(User);
+  const [state, setState] = useState<any>(null);
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({
     visible: false,
     message: '',
@@ -57,59 +69,159 @@ export default function Login({ navigation }: any) {
 
   };
 
-  const onLogin = async () => {
-    if (!Email || !Email.trim()) {
-      setToast({ visible: true, type: 'error', message: "Please enter your email!" })
+  const signIn = async () => {
+    try {
 
-      return
+      await GoogleSignin.hasPlayServices({
+        showPlayServicesUpdateDialog: true,
+      });
+
+
+      const response = await GoogleSignin.signIn();
+
+
+      if (isSuccessResponse(response)) {
+        const userInfo = response.data;
+        setEmail(userInfo?.user?.email || "")
+        await onLogin(userInfo)
+
+
+      } else {
+
+        console.log("Google sign-in cancelled");
+      }
+
+    } catch (error: any) {
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.IN_PROGRESS:
+            console.log("Sign in already in progress");
+            break;
+
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            console.log("Google Play Services not available");
+            break;
+
+          case statusCodes.SIGN_IN_CANCELLED:
+            console.log("User cancelled the login");
+            break;
+
+          default:
+            console.log("Google Sign-In error:", error);
+        }
+      } else {
+        console.log("Unknown error:", error);
+      }
+    }
+  };
+
+  const FCM_TokenApi = async (user: any) => {
+    try {
+      if (!user?.token) return;
+
+      const expoPushToken = await registerForPushNotificationsAsync();
+      console.log("Expo Push Token:", expoPushToken);
+
+      if (!expoPushToken) return;
+
+      await axios.post(
+        Api.new_token,
+        { pushToken: expoPushToken },
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
+
+      console.log("✅ Expo push token saved");
+
+    } catch (error: any) {
+      console.log(
+        "❌ Push token API error:",
+        error?.response?.data || error?.message
+      );
     }
 
+  }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(Email.trim())) {
-      setToast({ visible: true, type: 'error', message: "Please enter a valid email!" })
-      return
-    }
+  const onLogin = async (google: any = null) => {
+    if (!google) {
+      const email = Email?.trim();
+      const password = Password?.trim();
 
+      if (!email) {
+        return setToast({ visible: true, type: "error", message: "Please enter your email!" });
+      }
 
-    if (!Password || !Password.trim()) {
-      setToast({ visible: true, type: 'error', message: "Please enter your password!" })
-      return
-    }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return setToast({ visible: true, type: "error", message: "Please enter a valid email!" });
+      }
 
-    if (Password.trim().length < 6) {
-      setToast({ visible: true, type: 'error', message: "Password must be at least 6 characters!" })
-      return
+      if (!password) {
+        return setToast({ visible: true, type: "error", message: "Please enter your password!" });
+      }
+
+      if (password.length < 6) {
+        return setToast({ visible: true, type: "error", message: "Password must be at least 6 characters!" });
+      }
     }
 
     setIsLoading(true);
+
     try {
 
+      const requestData = google
+        ? {
+          email: google.user?.email,
+          password: "",
+          name: google.user?.name,
+          googleId: google.user?.id,
+          profileImage: google.user?.photo,
+        }
+        : {
+          email: Email.trim(),
+          password: Password.trim(),
+        };
 
-      let res = await ApiService(Api.login, {
-        email: Email.trim(),
-        password: Password.trim(),
+      const res:any = await axios.post(Api.login, requestData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
-      if (res?.success) {
-        let user = res?.data?.data;
-        // console.log(user);
-        setUser(user)
-        await AsyncStorageService.storeData('USERLOGIN', user);
-        navigation.replace('BottomTab');
-        setToast({ visible: true, type: "success", message: "Login successful!" })
+      if (res?.data?.success) {
+        const user = res?.data?.data;
 
+
+        await FCM_TokenApi(user);
+
+
+        setUser(user);
+        await AsyncStorageService.storeData("USERLOGIN", user);
+
+
+        navigation.replace("BottomTab");
+
+        setToast({ visible: true, type: "success", message: "Login successful!" });
       } else {
-        setToast({ visible: true, type: 'error', message: `${res?.error?.message}` })
+        console.warn("Login failed:", res);
+        setToast({ visible: true, type: "error", message: res?.message || "Something went wrong!" });
       }
     } catch (error: any) {
-      console.log("LogIn Error:", error);
+      console.error("Login Error:", error);
+      let message = "An error occurred during login";
+      if (axios.isAxiosError(error)) {
+        message = error?.response?.data?.message || message;
+      }
 
-      <ToastMessage type={handleApiResponse(error)?.type} message={handleApiResponse(error)?.message} />;
+      setToast({ visible: true, type: "error", message });
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const config = {
     velocityThreshold: 0.3,
@@ -208,7 +320,7 @@ export default function Login({ navigation }: any) {
               <Text style={styles.ORText}>OR</Text>
             </View>
 
-            <TouchableOpacity style={[styles.Button, styles.Flex]}>
+            <TouchableOpacity style={[styles.Button, styles.Flex]} onPress={signIn}>
               <Image
                 source={Images.Google}
                 style={styles.Google}

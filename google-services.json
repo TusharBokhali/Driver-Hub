@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "102486284784",
+    "project_id": "driver-hub-cbe3b",
+    "storage_bucket": "driver-hub-cbe3b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:102486284784:android:e5263fe422338883972535",
+        "android_client_info": {
+          "package_name": "com.tusharbokhali25.drivehubapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQAiBscHFpfUVOrSc515FjIJStDdtruMc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

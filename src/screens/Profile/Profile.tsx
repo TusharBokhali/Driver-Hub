@@ -1,6 +1,7 @@
 import { Images } from '@/assets/Images';
-import { Api, baseUrl } from '@/src/Api/Api';
+import { Api } from '@/src/Api/Api';
 import UpdateProfileModal from '@/src/components/EditProfile';
+import { formatDate } from '@/src/components/FormatDate';
 import Loader from '@/src/components/Loader';
 import LogoutModal from '@/src/components/LogoutModal';
 import ToastMessage from '@/src/components/ToastMessage';
@@ -13,7 +14,7 @@ import axios from 'axios';
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ActionSheet from "react-native-actionsheet";
 export default function Profile({ navigation }: any) {
   let local: string = "http://192.168.1.4:5000"
@@ -22,6 +23,7 @@ export default function Profile({ navigation }: any) {
   const [modalVisible, setModalVisible] = useState(false);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [ProfilePicture, setProfilePicture] = useState<string | any>(null);
+  const [PastBookings, setPastBookings] = useState([]);
   const [IsLoading, setIsLoading] = useState(false);
   const { user, setUser } = useContext<any>(User);
 
@@ -155,13 +157,43 @@ export default function Profile({ navigation }: any) {
     }
   };
 
-// console.log(user);
+  const PastBooking = async () => {
+    try {
+      let res = await axios.get(`${Api.Vehical_booking}`, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`
+        }
+      })
+      console.log(res);
+
+      if (res?.data?.success) {
+        setPastBookings(res.data.data || []);
+        console.log("Past Booking", res.data);
+      } else {
+        setToast({ visible: true, type: 'error', message: res?.data?.message || "Failed to fetch Past Bookings" })
+      }
+    } catch (error) {
+      console.log("");
+      if (axios.isAxiosError(error)) {
+        console.log("Axios error:", error.response?.data || error.message);
+        setToast({
+          visible: true,
+          type: 'error',
+          message: error.response?.data?.message || "Failed to fetch Past Bookings"
+        })
+      }
+    }
+
+  }
+
+  // console.log(user);
 
 
   useEffect(() => {
     if (ProfilePicture && ProfilePicture !== null) {
       ProfileUpdateFun()
     }
+    PastBooking();
   }, [ProfilePicture])
 
 
@@ -178,7 +210,7 @@ export default function Profile({ navigation }: any) {
 
         <View style={styles.ImageContainer}>
           <Image
-            source={user?.user?.profileImage ? { uri: baseUrl + user?.user?.profileImage } : Images.Driver}
+            source={user?.user?.profileImage ? { uri: user?.user?.profileImage } : Images.Driver}
             style={styles.ProfileImage}
           />
 
@@ -229,57 +261,76 @@ export default function Profile({ navigation }: any) {
               }
             </View>
           </TouchableOpacity>
+          {
+            PastBookings?.length > 0 &&
+            <View style={styles.BookSections}>
+              <View style={[styles.Flex, { marginBottom: 15 }]}>
+                <Text style={styles.Heading}>Past Bookings</Text>
+                <TouchableOpacity>
+                  <Text style={[styles.NormalText, { color: Colors.primary }]}>View All</Text>
+                </TouchableOpacity>
+              </View>
+              {
+                <FlatList
+                  data={PastBookings || []}
+                  keyExtractor={(item: any, index: number) => index.toString()}
+                  renderItem={({ item, index }) => (
+                    <TouchableOpacity style={[styles.Box, { justifyContent: 'space-between', }]}>
+                      <View style={[styles.Flex, { gap: 10 }]}>
+                        {
+                          item?.vehicleId?.vehicleType?.toLowerCase() === 'rent' &&
+                          <Image
+                            source={Images.FullRent}
+                            style={{ width: 40, height: 40 }}
+                          />
+                        }
+                        {
+                          item?.vehicleId?.vehicleType?.toLowerCase() === 'sell' &&
+                          <Image
+                            source={Images.Doller}
+                            style={{ width: 40, height: 40 }}
+                          />
+                        }
+                        {
+                          item?.vehicleId?.vehicleType?.toLowerCase() === 'service' &&
+                          <Image
+                            source={Images.FullService}
+                            style={{ width: 40, height: 40 }}
+                          />
+                        }
+                        <View>
+                          <Text style={styles.NormalText}>{item?.vehicleId?.vehicleType}- {item?.vehicleId?.title}</Text>
+                          <Text style={styles.DarkText}>{item?.bookingStatus} • {formatDate(item?.updatedAt || item?.createdAt)}</Text>
+                        </View>
+                      </View>
+                      {
+                        item?.vehicleId?.vehicleType?.toLowerCase() === 'rent' ? (
+                          <View style={{ flexDirection: 'column' }}>
+                            <Text
 
-          <View style={styles.BookSections}>
-            <View style={[styles.Flex, { marginBottom: 15 }]}>
-              <Text style={styles.Heading}>Past Bookings</Text>
-              <TouchableOpacity>
-                <Text style={[styles.NormalText, { color: Colors.primary }]}>View All</Text>
-              </TouchableOpacity>
+                              style={[styles.NormalText, { color: Colors.green, fontSize: 12 }]}
+                            >
+                              {item?.priceType?.currency_symbol}
+                              {item?.priceType?.price}/{item?.priceType?.label}
+                            </Text>
+                          </View>
+                        ) : (
+                          <Text style={[styles.NormalText, { color: Colors.green }]}>
+                            {item?.priceType?.currency_symbol}
+                            {item?.priceType?.price}
+                          </Text>
+                        )
+                      }
+
+
+                    </TouchableOpacity>
+                  )}
+                />
+              }
+
             </View>
-            <TouchableOpacity style={[styles.Box, { justifyContent: 'space-between', }]}>
-              <View style={[styles.Flex, { gap: 10 }]}>
-                <Image
-                  source={Images.Doller}
-                  style={{ width: 40, height: 40 }}
-                />
-                <View>
-                  <Text style={styles.NormalText}>Sell - 2019 Honda Civic</Text>
-                  <Text style={styles.DarkText}>Completed • Dec 15, 2023</Text>
-                </View>
-              </View>
-              <Text style={[styles.NormalText, { color: Colors.green }]}>$18,500</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.Box, { justifyContent: 'space-between', marginTop: 15 }]}>
-              <View style={[styles.Flex, { gap: 10 }]}>
-                <Image
-                  source={Images.FullRent}
-                  style={{ width: 40, height: 40 }}
-                />
-                <View>
-                  <Text style={styles.NormalText}>Rent - BMW X5</Text>
-                  <Text style={styles.DarkText}>Completed • Nov 20, 2023</Text>
-                </View>
-              </View>
-              <Text style={[styles.NormalText, { color: Colors.green }]}>$250/day</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.Box, { justifyContent: 'space-between', marginTop: 15 }]}>
-              <View style={[styles.Flex, { gap: 10 }]}>
-                <Image
-                  source={Images.FullService}
-                  style={{ width: 40, height: 40 }}
-                />
-                <View>
-                  <Text style={styles.NormalText}>Service - Oil Change</Text>
-                  <Text style={styles.DarkText}>Completed • Oct 10, 2023</Text>
-                </View>
-              </View>
-              <Text style={[styles.NormalText, { color: Colors.green }]}>$85</Text>
-            </TouchableOpacity>
-          </View>
-
+          }
+-*
           <TouchableOpacity style={[styles.Box, { justifyContent: 'space-between', }]} onPress={() => setModalVisible(true)}>
             <View style={[styles.Flex, { gap: 10 }]}>
               <Image
