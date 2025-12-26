@@ -2,6 +2,9 @@
 
 # dependencies
 node_modules/
+# Firebase / Google Secrets
+*.json
+firebase-adminsdk-*.json
 
 # Expo
 .expo/
